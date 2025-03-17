@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit User</title>
+</head>
+<body>
+    <h1>Edit User</h1>
+    <form action="{{ url_for('update_user', user_id=user.id) }}" method="POST">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" value="{{ user.email }}" required><br>
+        <label for="role">Role (0-User, 1-Admin, 2-Superadmin):</label>
+        <input type="number" id="role" name="role" value="{{ user.role.value }}" min="0" max="2" required><br>
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" value="{{ user.name }}" required><br>
+        <label for="surname">Surname:</label>
+        <input type="text" id="surname" name="surname" value="{{ user.surname }}" required><br>
+        <label for="phone">Phone:</label>
+        <input type="text" id="phone" name="phone" value="{{ user.phone }}"><br>
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address" value="{{ user.address }}"><br>
+        <label for="facebook">Facebook:</label>
+        <input type="text" id="facebook" name="facebook" value="{{ user.facebook }}"><br>
+        <label for="instagram">Instagram:</label>
+        <input type="text" id="instagram" name="instagram" value="{{ user.instagram }}"><br>
+        <label for="linkedin">LinkedIn:</label>
+        <input type="text" id="linkedin" name="linkedin" value="{{ user.linkedin }}"><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password"><br>
+        <button type="submit">Update User</button>
+    </form>
+</body>
+</html>
