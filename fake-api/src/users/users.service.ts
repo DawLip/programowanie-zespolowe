@@ -69,4 +69,12 @@ export class UsersService {
   async findAll(): Promise<User | undefined> {
     return this.users;
   }
+
+  async update(id: number, toUpdate: any): Promise<User | undefined> {
+    const user = this.users.find(user => user.id === id);
+    if(user) {
+      Object.assign(user, toUpdate);
+      return { status: "ok" };
+    }
+  }
 }
