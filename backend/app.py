@@ -29,8 +29,11 @@ def index():
 # Rejestracja nowego użytkownika
 @app.route('/auth/register', methods=['POST'])
 def register():
-    email = request.form.get('email')
-    password = request.form.get('password')
+    # Pobieranie danych z formularza/JSON, choose one
+    data = request.get_json()
+    # data = request.form.get()
+    email = data.get('email')
+    password = data.get('password')
     name = "John"   # placeholder
     surname = "Doe" # placeholder
 
@@ -53,6 +56,13 @@ def register():
     access_token = create_access_token(identity=new_user.id)
 
     return jsonify({"status": "success", "access_token": access_token}), 200
+
+
+
+##############################  |
+###Funkcje tylko do przykladu#  |
+##############################  V
+
 
 # Tworzenie nowego użytkownika
 @app.route('/users', methods=['POST'])
