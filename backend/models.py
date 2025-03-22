@@ -11,17 +11,17 @@ class Role(Enum):
 
 # Model użytkownika
 class Users(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(254), unique=True, nullable=False, index=True)
-    role = db.Column(db.Enum(Role), nullable=False)
-    name = db.Column(db.String(50), nullable=False)
-    surname = db.Column(db.String(50), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    email = db.Column(db.String(254), unique=True, nullable=False, index=True)  #in register
+    role = db.Column(db.Enum(Role), default=Role.USER, nullable=False)
+    name = db.Column(db.String(50), nullable=False)                             #in register
+    surname = db.Column(db.String(50), nullable=False)                          #in register
     phone = db.Column(db.String(20), nullable=True)
     address = db.Column(db.String(100), nullable=True)
     facebook = db.Column(db.String(50), nullable=True)
     instagram = db.Column(db.String(50), nullable=True)
     linkedin = db.Column(db.String(50), nullable=True)
-    password = db.Column(db.String(128), nullable=False)
+    password = db.Column(db.String(128), nullable=False)                        #in register
 
     # Propozycja dodania daty utworzenia i aktualizacji
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())

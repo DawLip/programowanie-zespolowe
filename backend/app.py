@@ -1,11 +1,17 @@
 from flask import Flask, jsonify, request, abort, render_template, redirect, url_for
+from flask_jwt_extended import JWTManager, create_access_token
 from models import db, Users, Role
+import bcrypt
 
 app = Flask(__name__)
 
 # Konfiguracja bazy danych SQLite
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Konfiguracja JWT
+app.config['JWT_SECRET_KEY'] = 'super-secret-key'
+jwt = JWTManager(app)
 
 # Inicjalizacja bazy danych
 db.init_app(app)
@@ -19,6 +25,34 @@ with app.app_context():
 def index():
     users = Users.query.all()
     return render_template('index.html', users=users)
+
+# Rejestracja nowego użytkownika
+@app.route('/auth/register', methods=['POST'])
+def register():
+    email = request.form.get('email')
+    password = request.form.get('password')
+    name = "John"   # placeholder
+    surname = "Doe" # placeholder
+
+    if not email or not password:
+        return jsonify({"status": "error", "message": "Missing required fields"}), 400
+    
+    # if email is taken
+    if Users.query.filter_by(email=email).first():
+        return jsonify({"status": "email is taken"}), 400
+    
+    # Hashowanie hasła
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+    # Tworzenie nowego uzytkownika
+    new_user = Users(email=email, password=hashed_password.decode('utf-8'), name=name, surname=surname)
+    db.session.add(new_user)
+    db.session.commit()
+
+    # Tworzenie tokenu JWT
+    access_token = create_access_token(identity=new_user.id)
+
+    return jsonify({"status": "success", "access_token": access_token}), 200
 
 # Tworzenie nowego użytkownika
 @app.route('/users', methods=['POST'])
