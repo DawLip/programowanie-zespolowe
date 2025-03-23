@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request, abort, render_template, redirect, url_for
-from flask_jwt_extended import JWTManager, create_access_token
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from models import db, Users, Role
 import bcrypt
 
@@ -57,8 +57,34 @@ def register():
 
     return jsonify({"status": "success", "access_token": access_token}), 200
 
+@app.route('/auth/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    if not data:
+        return jsonify({"status": "error", "message": "No data provided"}), 400
 
+    email = data.get('email')
+    password = data.get('password')
 
+    if not email or not password:
+        return jsonify({"status": "error", "message": "Missing email or password"}), 400
+
+    # Wyszukanie użytkownika w bazie danych
+    user = Users.query.filter_by(email=email).first()
+
+    if not user:
+        return jsonify({"status": "error", "message": "User not found"}), 404
+
+    # Debugowanie: Sprawdź, jakie hasło jest w bazie danych
+    print("User password from DB:", user.password)
+
+    # Weryfikacja hasła
+    if password == data.get('password'):
+        access_token = create_access_token(identity=user.id)
+        return jsonify({"status": "success", "access_token": access_token}), 200
+    else:
+        return jsonify({"status": "error", "message": "Invalid email or password"}), 401
+    
 ##############################  |
 ###Funkcje tylko do przykladu#  |
 ##############################  V
