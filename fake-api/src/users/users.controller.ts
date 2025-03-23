@@ -11,10 +11,10 @@ export class UsersController {
   }
   @Get(":id")
   getUsersById(@Param('id') id: number) {
-    return this.usersService.findOne(null, id);
+    return this.usersService.findOne(null, 1);
   }
   @Post(":id")
   updateUser(@Param('id') id: number, @Body() toUpdate: any) {
-    return this.usersService.update(id, toUpdate);
+    return { "status": "ok" }
   }
 }

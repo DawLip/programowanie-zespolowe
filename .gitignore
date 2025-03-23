@@ -1,4 +1,4 @@
 /website/node_modules
-
+/website/.next
 /fake-api/node_modules
 /fake-api/dist
