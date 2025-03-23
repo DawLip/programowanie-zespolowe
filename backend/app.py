@@ -75,9 +75,6 @@ def login():
     if not user:
         return jsonify({"status": "error", "message": "User not found"}), 404
 
-    # Debugowanie: Sprawdź, jakie hasło jest w bazie danych
-    print("User password from DB:", user.password)
-
     # Weryfikacja hasła
     if password == data.get('password'):
         access_token = create_access_token(identity=user.id)
