@@ -1,9 +1,11 @@
 from flask import Flask, jsonify, request, abort, render_template, redirect, url_for
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-from models import db, Users, Role, Messages
-from flask_socketio import SocketIO
+from models import db, Users, Messages, Room, Room_Users, Role
+from flask_socketio import SocketIO, emit, join_room, leave_room
 from sqlalchemy.orm import sessionmaker
 import bcrypt
+from flask import request, jsonify
+from sqlalchemy import or_, and_
 
 app = Flask(__name__)
 # Konfiguracja JWT
@@ -75,21 +77,22 @@ def login():
     if not email or not password:
         return jsonify({"status": "error", "message": "Missing email or password"}), 400
 
-    # Wyszukanie użytkownika w bazie danych
     user = Users.query.filter_by(email=email).first()
 
     if not user:
         return jsonify({"status": "error", "message": "User not found"}), 404
 
-    # Weryfikacja hasła
-    if password == data.get('password'):
-        access_token = create_access_token(identity=user.id)
-        return jsonify({"status": "success", "access_token": access_token}), 200
+    # Verify password - IMPORTANT: In production, use proper password hashing!
+    if password == user.password:  # Changed from data.get('password')
+        # Ensure identity is a string
+        access_token = create_access_token(identity=str(user.id))  # Convert to string
+        return jsonify({
+            "status": "success",
+            "access_token": access_token,
+            # "user_id": user.id  # For debugging
+        }), 200
     else:
         return jsonify({"status": "error", "message": "Invalid email or password"}), 401
-
-from flask import request, jsonify
-from sqlalchemy import or_, and_
 
 @app.route('/users/search', methods=['GET'])
 def search_users():
@@ -135,38 +138,97 @@ def search_users():
             "status": "error",
             "message": str(e)
         }), 500
+
+################# Bonus Endpoints #################
+
+@app.route('/api/my-rooms', methods=['GET'])
+@jwt_required()
+def get_my_rooms():
+    # print("\n=== /api/my-rooms called ===")
+    # print("Request headers:", dict(request.headers))  # Verify Authorization header
     
-# Obsługa połaczenia
+    try:
+        user_id = get_jwt_identity()
+        print("Decoded user_id from JWT:", user_id)
+        
+        rooms = Room.query.join(Room_Users).filter(Room_Users.user_id == user_id).all()
+        print("SQL query executed. Found rooms:", [r.name for r in rooms])
+        
+        return jsonify({
+            "status": "success",
+            "rooms": [{"id": r.id, "name": r.name} for r in rooms]
+        })
+    except Exception as e:
+        print("ERROR in my-rooms:", str(e))
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+################# SOCKETIO #################
+
 @socketio.on('connect')
+@jwt_required()
 def handle_connect():
     user_id = get_jwt_identity()
-    socketio.emit('user_connected', user_id, broadcast=True)
+    print(f"User {user_id} connected")
+    socketio.emit('connection_established', {'user_id': user_id})
 
-# Obsługa wiadomości
-@socketio.on('message')
-def handle_message(data):
-    print('received message: ' + data)
-    # socketio.emit('message', data, broadcast=True)
-
-# Obsługa pokojów
 @socketio.on('join_room')
+@jwt_required()
 def handle_join_room(data):
-    room = data['room']
-    socketio.join_room(room)
-    socketio.emit('message', f'User joined room {room}', room=room)
-
-# Obsługa wysyłania wiadomości
-@socketio.on('send_message')
-def handle_send_message(data):
-    room = data['room']
-    message = data['message']
     user_id = get_jwt_identity()
+    room_id = data['room_id']
     
-    new_message = Messages(user_id=user_id, room=room, content=message)
-    db.session.add(new_message)
-    db.session.commit()
+    print(f"User {user_id} wants to join room {room_id}")
     
-    socketio.emit('message', message, room=room)
+    # Check if user is a member of the room
+    if Room_Users.query.filter_by(user_id=user_id, room_id=room_id).first():
+        join_room(room_id)  # <-- This is the correct way to join a room
+        emit('room_joined', {
+            'room_id': room_id,
+            'message': f'Successfully joined room {room_id}'
+        }, room=room_id)
+    else:
+        emit('join_error', {
+            'message': 'You are not a member of this room'
+        })
+
+@socketio.on('send_message')
+@jwt_required()
+def handle_send_message(data):
+    try:
+        user_id = get_jwt_identity()
+        room_id = data['room_id']
+        message_content = data['message']
+
+        print(f"1. User {user_id} wants to send message to room {room_id}: {message_content}")
+        
+        # Verify room membership
+        if not Room_Users.query.filter_by(user_id=user_id, room_id=room_id).first():
+            emit('message_error', {'message': 'Not authorized to send to this room'})
+            return
+        
+        # Save message to database (optional)
+        new_message = Messages(
+            user_id=user_id,
+            room_id=room_id,
+            content=message_content
+        )
+        # db.session.add(new_message)
+        # db.session.commit()
+        
+        # Broadcast to room
+        emit('new_message', {
+            'user_id': user_id,
+            'room_id': room_id,
+            'message': message_content,
+            'timestamp': new_message.timestamp.isoformat(),
+            'username': get_jwt_identity()  # Or fetch from Users table
+        }, room=room_id)
+        
+    except Exception as e:
+        print(f"Error sending message: {str(e)}")
+        emit('message_error', {'message': 'Failed to send message'})
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
