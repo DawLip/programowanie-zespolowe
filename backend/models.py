@@ -13,7 +13,7 @@ class Role(Enum):
 class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     email = db.Column(db.String(254), unique=True, nullable=False, index=True)  #in register
-    role = db.Column(db.Enum(Role), default=Role.USER, nullable=False)
+    # role = db.Column(db.Enum(Role), default=Role.USER, nullable=False)
     name = db.Column(db.String(50), nullable=False)                             #in register
     surname = db.Column(db.String(50), nullable=False)                          #in register
     phone = db.Column(db.String(20), nullable=True)
@@ -26,6 +26,14 @@ class Users(db.Model):
     # Propozycja dodania daty utworzenia i aktualizacji
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+
+class Messages(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    # room_id = db.Column(db.Integer, db.ForeignKey('rooms.id'), nullable=False)
+    room = db.Column(db.String(255), nullable=False)
+    content = db.Column(db.String(255), nullable=False)
+    timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
 
     def __repr__(self):
         return f'<User {self.email}>'

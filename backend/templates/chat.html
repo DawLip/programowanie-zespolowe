@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket.IO Chat Test</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        #chat { border: 1px solid #ddd; padding: 10px; height: 300px; overflow-y: scroll; margin-bottom: 10px; }
+        input, button { padding: 8px; margin: 5px 0; }
+        .room { margin: 10px 0; padding: 10px; border: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <h1>Socket.IO Chat Test</h1>
+    
+    <div id="auth-section">
+        <h2>Authentication</h2>
+        <div>
+            <input type="text" id="email" placeholder="Email" value="john@admin">
+            <input type="password" id="password" placeholder="Password" value="admin">
+            <button id="login-btn">Login</button>
+            <button id="register-btn">Register</button>
+        </div>
+        <div id="token-display" style="word-break: break-all; margin-top: 10px;"></div>
+    </div>
+
+    <div id="chat-section" style="display: none;">
+        <h2>Chat</h2>
+        <div id="chat"></div>
+        <input type="text" id="message-input" placeholder="Type your message">
+        <button id="send-btn">Send</button>
+
+        <div class="room">
+            <h3>Rooms</h3>
+            <input type="text" id="room-name" placeholder="Room name">
+            <button id="join-room-btn">Join Room</button>
+            <div id="current-room"></div>
+        </div>
+    </div>
+
+    <div id="connection-status">Not connected</div>
+
+    <script>
+        // Global variables
+        let socket;
+        let currentRoom = null;
+        let jwtToken = localStorage.getItem('jwtToken');
+
+        // DOM elements
+        const authSection = document.getElementById('auth-section');
+        const chatSection = document.getElementById('chat-section');
+        const tokenDisplay = document.getElementById('token-display');
+        const connectionStatus = document.getElementById('connection-status');
+        const chatDiv = document.getElementById('chat');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        const roomNameInput = document.getElementById('room-name');
+        const joinRoomBtn = document.getElementById('join-room-btn');
+        const currentRoomDisplay = document.getElementById('current-room');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+
+        // Connect to Socket.IO server
+        function connectSocket() {
+            if (!jwtToken) {
+                console.log("No JWT token available");
+                return;
+            }
+
+            socket = io({
+                extraHeaders: {
+                    Authorization: `Bearer ${jwtToken}`
+                }
+            });
+
+            socket.on('connect', () => {
+                connectionStatus.textContent = 'Connected';
+                connectionStatus.style.color = 'green';
+                console.log('Connected to server');
+            });
+
+            socket.on('disconnect', () => {
+                connectionStatus.textContent = 'Disconnected';
+                connectionStatus.style.color = 'red';
+                console.log('Disconnected from server');
+            });
+
+            socket.on('message', (msg) => {
+                const messageElement = document.createElement('div');
+                messageElement.textContent = msg;
+                chatDiv.appendChild(messageElement);
+                chatDiv.scrollTop = chatDiv.scrollHeight;
+            });
+
+            socket.on('user_connected', (userId) => {
+                console.log(`User connected: ${userId}`);
+            });
+        }
+
+        // Authentication functions
+        async function login() {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                
+                if (data.access_token) {
+                    jwtToken = data.access_token;
+                    localStorage.setItem('jwtToken', jwtToken);
+                    tokenDisplay.textContent = `JWT: ${jwtToken}`;
+                    authSection.style.display = 'none';
+                    chatSection.style.display = 'block';
+                    connectSocket();
+                } else {
+                    alert(data.message || 'Login failed');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Login error');
+            }
+        }
+
+        async function register() {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
+            try {
+                const response = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        email, 
+                        password,
+                        name: 'Test',
+                        surname: 'User'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.access_token) {
+                    jwtToken = data.access_token;
+                    localStorage.setItem('jwtToken', jwtToken);
+                    tokenDisplay.textContent = `JWT: ${jwtToken}`;
+                    authSection.style.display = 'none';
+                    chatSection.style.display = 'block';
+                    connectSocket();
+                } else {
+                    alert(data.message || 'Registration failed');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                alert('Registration error');
+            }
+        }
+
+        // Chat functions
+        function sendMessage() {
+            const message = messageInput.value;
+            if (!message) return;
+
+            if (currentRoom) {
+                socket.emit('send_message', { 
+                    room: currentRoom, 
+                    message: `${getCurrentUser()}: ${message}` 
+                });
+            } else {
+                socket.emit('message', `${getCurrentUser()}: ${message}`);
+            }
+
+            messageInput.value = '';
+        }
+
+        function joinRoom() {
+            const roomName = roomNameInput.value;
+            if (!roomName) return;
+
+            socket.emit('join_room', { room: roomName });
+            currentRoom = roomName;
+            currentRoomDisplay.textContent = `Current room: ${roomName}`;
+            roomNameInput.value = '';
+        }
+
+        function getCurrentUser() {
+            // In a real app, you'd decode the JWT to get user info
+            return emailInput.value.split('@')[0] || 'Anonymous';
+        }
+
+        // Event listeners
+        loginBtn.addEventListener('click', login);
+        registerBtn.addEventListener('click', register);
+        sendBtn.addEventListener('click', sendMessage);
+        joinRoomBtn.addEventListener('click', joinRoom);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // Initialize
+        if (jwtToken) {
+            tokenDisplay.textContent = `JWT: ${jwtToken}`;
+            authSection.style.display = 'none';
+            chatSection.style.display = 'block';
+            connectSocket();
+        }
+    </script>
+</body>
+</html>

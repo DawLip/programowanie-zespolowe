@@ -1,30 +1,34 @@
 from flask import Flask, jsonify, request, abort, render_template, redirect, url_for
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-from models import db, Users, Role
+from models import db, Users, Role, Messages
+from flask_socketio import SocketIO
+from sqlalchemy.orm import sessionmaker
 import bcrypt
 
 app = Flask(__name__)
+# Konfiguracja JWT
+app.config['JWT_SECRET_KEY'] = 'super-secret-key'
+jwt = JWTManager(app)
+
+# Konfiguracja Socket.IO
+socketio = SocketIO(app)
 
 # Konfiguracja bazy danych SQLite
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Konfiguracja JWT
-app.config['JWT_SECRET_KEY'] = 'super-secret-key'
-jwt = JWTManager(app)
-
-# Inicjalizacja bazy danych
-db.init_app(app)
-
-# Tworzenie tabel w bazie danych
+db.init_app(app) # Inicjalizacja bazy danych
 with app.app_context():
-    db.create_all()
+    db.create_all()  # Tworzenie tabel w bazie danych
+    # Konfiguracja sesji
+    Session = sessionmaker(bind=db.engine)
+    session = Session()
 
 # Strona główna z listą użytkowników
 @app.route('/')
 def index():
     users = Users.query.all()
-    return render_template('index.html', users=users)
+    return render_template('chat.html', users=users)
 
 # Rejestracja nowego użytkownika
 @app.route('/auth/register', methods=['POST'])
@@ -58,6 +62,7 @@ def register():
 
     return jsonify({"status": "success", "access_token": access_token}), 200
 
+# Logowanie
 @app.route('/auth/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -82,105 +87,38 @@ def login():
         return jsonify({"status": "success", "access_token": access_token}), 200
     else:
         return jsonify({"status": "error", "message": "Invalid email or password"}), 401
+
+# Obsługa połaczenia
+@socketio.on('connect')
+def handle_connect():
+    user_id = get_jwt_identity()
+    socketio.emit('user_connected', user_id, broadcast=True)
+
+# Obsługa wiadomości
+@socketio.on('message')
+def handle_message(data):
+    print('received message: ' + data)
+    # socketio.emit('message', data, broadcast=True)
+
+# Obsługa pokojów
+@socketio.on('join_room')
+def handle_join_room(data):
+    room = data['room']
+    socketio.join_room(room)
+    socketio.emit('message', f'User joined room {room}', room=room)
+
+# Obsługa wysyłania wiadomości
+@socketio.on('send_message')
+def handle_send_message(data):
+    room = data['room']
+    message = data['message']
+    user_id = get_jwt_identity()
     
-##############################  |
-###Funkcje tylko do przykladu#  |
-##############################  V
-
-
-# Tworzenie nowego użytkownika
-@app.route('/users', methods=['POST'])
-def create_user():
-    email = request.form.get('email')
-    role = request.form.get('role')
-    name = request.form.get('name')
-    surname = request.form.get('surname')
-    phone = request.form.get('phone')
-    address = request.form.get('address')
-    facebook = request.form.get('facebook')
-    instagram = request.form.get('instagram')
-    linkedin = request.form.get('linkedin')
-    password = request.form.get('password')
-
-    if not email or not role or not name or not surname or not password:
-        abort(400, description="Missing required fields")
-
-    try:
-        role = Role(int(role))  # Konwersja roli na Enum
-    except ValueError:
-        abort(400, description="Invalid role")
-
-    user = Users(
-        email=email,
-        role=role,
-        name=name,
-        surname=surname,
-        phone=phone,
-        address=address,
-        facebook=facebook,
-        instagram=instagram,
-        linkedin=linkedin,
-        password=password  # W praktyce hasło powinno być zahashowane!
-    )
-    db.session.add(user)
+    new_message = Messages(user_id=user_id, room=room, content=message)
+    db.session.add(new_message)
     db.session.commit()
-    return redirect(url_for('index'))
-
-# Usuwanie użytkownika
-@app.route('/users/<int:user_id>/delete', methods=['POST'])
-def delete_user(user_id):
-    user = Users.query.get_or_404(user_id)
-    db.session.delete(user)
-    db.session.commit()
-    return redirect(url_for('index'))
-
-# Formularz do aktualizacji użytkownika
-@app.route('/users/<int:user_id>/edit')
-def edit_user(user_id):
-    user = Users.query.get_or_404(user_id)
-    return render_template('edit_user.html', user=user)
-
-# Aktualizacja użytkownika
-@app.route('/users/<int:user_id>/update', methods=['POST'])
-def update_user(user_id):
-    user = Users.query.get_or_404(user_id)
-    email = request.form.get('email')
-    role = request.form.get('role')
-    name = request.form.get('name')
-    surname = request.form.get('surname')
-    phone = request.form.get('phone')
-    address = request.form.get('address')
-    facebook = request.form.get('facebook')
-    instagram = request.form.get('instagram')
-    linkedin = request.form.get('linkedin')
-    password = request.form.get('password')
-
-    if email:
-        user.email = email
-    if role:
-        try:
-            user.role = Role(int(role))  # Konwersja roli na Enum
-        except ValueError:
-            abort(400, description="Invalid role")
-    if name:
-        user.name = name
-    if surname:
-        user.surname = surname
-    if phone:
-        user.phone = phone
-    if address:
-        user.address = address
-    if facebook:
-        user.facebook = facebook
-    if instagram:
-        user.instagram = instagram
-    if linkedin:
-        user.linkedin = linkedin
-    if password:
-        user.password = password  # W praktyce hasło powinno być zahashowane!
-
-    db.session.commit()
-    return redirect(url_for('index'))
+    
+    socketio.emit('message', message, room=room)
 
 if __name__ == '__main__':
     app.run(debug=True)
