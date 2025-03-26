@@ -82,6 +82,54 @@ def login():
     else:
         return jsonify({"status": "error", "message": "Invalid email or password"}), 401
     
+from flask import request, jsonify
+from sqlalchemy import or_, and_
+
+@app.route('/users/search', methods=['GET'])
+def search_users():
+    search_query = request.args.get('query', '').strip()
+    
+    if not search_query or len(search_query) < 2:
+        return jsonify({"status": "error", "message": "Query must be at least 2 characters long"}), 400
+
+    try:
+        query_parts = search_query.split()
+        
+        # Szukanie imie+nazwisko
+        if len(query_parts) >= 2:
+            users = Users.query.filter(
+                and_(
+                    Users.name.ilike(f'%{query_parts[0]}%'),
+                    Users.surname.ilike(f'%{query_parts[1]}%')
+                )
+            ).limit(20).all()
+        else:
+            # szukanie imie lub nazwisko
+            users = Users.query.filter(
+                or_(
+                    Users.name.ilike(f'%{query_parts[0]}%'),
+                    Users.surname.ilike(f'%{query_parts[0]}%')
+                )
+            ).limit(20).all()
+
+        results = [{
+            "id": user.id,
+            "name": user.name,
+            "surname": user.surname
+        } for user in users]
+
+        return jsonify({
+            "status": "success",
+            "count": len(results),
+            "users": results
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+    
 ##############################  |
 ###Funkcje tylko do przykladu#  |
 ##############################  V
