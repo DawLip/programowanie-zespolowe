@@ -34,8 +34,8 @@ def register():
     # data = request.form.get()
     email = data.get('email')
     password = data.get('password')
-    name = "John"   # placeholder
-    surname = "Doe" # placeholder
+    name = data.get('name')
+    surname = data.get('surname')
 
     if not email or not password:
         return jsonify({"status": "error", "message": "Missing required fields"}), 400
@@ -45,10 +45,11 @@ def register():
         return jsonify({"status": "email is taken"}), 400
     
     # Hashowanie hasła
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    # hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
     # Tworzenie nowego uzytkownika
-    new_user = Users(email=email, password=hashed_password.decode('utf-8'), name=name, surname=surname)
+    new_user = Users(email=email, password=password, name=name, surname=surname)
+    # new_user = Users(email=email, password=hashed_password.decode('utf-8'), name=name, surname=surname)
     db.session.add(new_user)
     db.session.commit()
 
