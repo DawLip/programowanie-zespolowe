@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, abort, render_template, redirect, url_for
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-from models import db, Users, Messages, Room, Room_Users, Role
+from models import db, Users, Messages, Room, Room_Users, Role, MessageType
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from sqlalchemy.orm import sessionmaker
 import bcrypt
@@ -161,6 +161,24 @@ def get_my_rooms():
     except Exception as e:
         print("ERROR in my-rooms:", str(e))
         return jsonify({"status": "error", "message": str(e)}), 500
+    
+@app.route('/api/rooms/<int:room_id>/messages', methods=['GET'])
+@jwt_required()
+def get_room_messages(room_id):
+    user_id = get_jwt_identity()
+    
+    # Verify room membership
+    if not Room_Users.query.filter_by(user_id=user_id, room_id=room_id).first():
+        return jsonify({'error': 'Not authorized'}), 403
+    
+    messages = Messages.query.filter_by(room_id=room_id).order_by(Messages.timestamp.asc()).all()
+    
+    return jsonify([{
+        'user_id': msg.user_id,
+        'message': msg.content,
+        'timestamp': msg.timestamp.isoformat(),
+        'username': Users.query.get(msg.user_id).email.split('@')[0]  # Or use name field
+    } for msg in messages])
 
 ################# SOCKETIO #################
 
@@ -210,17 +228,19 @@ def handle_send_message(data):
         new_message = Messages(
             user_id=user_id,
             room_id=room_id,
-            content=message_content
+            content=message_content,
+            message_type='text'
         )
-        # db.session.add(new_message)
-        # db.session.commit()
+        db.session.add(new_message)
+        db.session.commit()
         
         # Broadcast to room
+        print(f"2. User {user_id} wants to send message to room {room_id}: {message_content}")
         emit('new_message', {
             'user_id': user_id,
             'room_id': room_id,
             'message': message_content,
-            'timestamp': new_message.timestamp.isoformat(),
+            # 'timestamp': new_message.timestamp.isoformat(),
             'username': get_jwt_identity()  # Or fetch from Users table
         }, room=room_id)
         
