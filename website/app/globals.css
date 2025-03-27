@@ -1,26 +1,30 @@
 @import "tailwindcss";
 
+* {
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* div, section, footer, header,article, aside{
+  border: 1px solid #ad8d8d;
+} */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --spacing: 1px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Inter, Helvetica, sans-serif;
+  min-height: 100vh;
 }
+
+
+main, div, section, footer, header,article, aside{
+  display: flex;
+}
+
+.on_surface_white { color: #EAE5E5 }
+.on_surface_gray { color: #565656 }
+.on_surface_light_gray { color: #A0A0A0 }
+.c_border { color: #565656 }
+.surface { background-color: #eee; }
