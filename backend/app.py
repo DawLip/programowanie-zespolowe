@@ -144,7 +144,7 @@ def search_users():
 @app.route('/api/my-rooms', methods=['GET'])
 @jwt_required()
 def get_my_rooms():
-    # print("\n=== /api/my-rooms called ===")
+    print("\n=== /api/my-rooms called ===")
     # print("Request headers:", dict(request.headers))  # Verify Authorization header
     
     try:
@@ -166,18 +166,30 @@ def get_my_rooms():
 @jwt_required()
 def get_room_messages(room_id):
     user_id = get_jwt_identity()
+    print(f"User {user_id} wants to get messages for room {room_id}")
     
     # Verify room membership
     if not Room_Users.query.filter_by(user_id=user_id, room_id=room_id).first():
         return jsonify({'error': 'Not authorized'}), 403
     
-    messages = Messages.query.filter_by(room_id=room_id).order_by(Messages.timestamp.asc()).all()
+    # Join with Users table to get the sender's name
+    messages = db.session.query(
+        Messages,
+        Users.name
+    ).join(
+        Users, Messages.user_id == Users.id
+    ).filter(
+        Messages.room_id == room_id
+    ).order_by(
+        Messages.timestamp.asc()
+    ).all()
     
     return jsonify([{
-        'user_id': msg.user_id,
-        'message': msg.content,
-        'timestamp': msg.timestamp.isoformat(),
-        'username': Users.query.get(msg.user_id).email.split('@')[0]  # Or use name field
+        'user_id': msg.Messages.user_id,
+        'message': msg.Messages.content,
+        'timestamp': msg.Messages.timestamp.isoformat(),
+        'name': msg.name,  # From joined Users table
+        'message_type': msg.Messages.message_type.value  # Get enum value
     } for msg in messages])
 
 ################# SOCKETIO #################
@@ -185,6 +197,7 @@ def get_room_messages(room_id):
 @socketio.on('connect')
 @jwt_required()
 def handle_connect():
+    print("\n=== SocketIO connected ===")
     user_id = get_jwt_identity()
     print(f"User {user_id} connected")
     socketio.emit('connection_established', {'user_id': user_id})
@@ -192,6 +205,7 @@ def handle_connect():
 @socketio.on('join_room')
 @jwt_required()
 def handle_join_room(data):
+    print("\n=== SocketIO join_room called ===")
     user_id = get_jwt_identity()
     room_id = data['room_id']
     
@@ -217,7 +231,7 @@ def handle_send_message(data):
         room_id = data['room_id']
         message_content = data['message']
 
-        print(f"1. User {user_id} wants to send message to room {room_id}: {message_content}")
+        print(f"User {user_id} wants to send message to room {room_id}: {message_content}")
         
         # Verify room membership
         if not Room_Users.query.filter_by(user_id=user_id, room_id=room_id).first():
@@ -229,19 +243,18 @@ def handle_send_message(data):
             user_id=user_id,
             room_id=room_id,
             content=message_content,
-            message_type='text'
+            message_type= MessageType.TEXT
         )
         db.session.add(new_message)
         db.session.commit()
         
         # Broadcast to room
-        print(f"2. User {user_id} wants to send message to room {room_id}: {message_content}")
         emit('new_message', {
             'user_id': user_id,
             'room_id': room_id,
             'message': message_content,
-            # 'timestamp': new_message.timestamp.isoformat(),
-            'username': get_jwt_identity()  # Or fetch from Users table
+            'timestamp': new_message.timestamp.isoformat(),
+            'name': Users.query.filter_by(id=user_id).first().name
         }, room=room_id)
         
     except Exception as e:
