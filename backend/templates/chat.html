@@ -255,12 +255,14 @@
 
         // Join a room
         function joinRoom(roomId, roomName) {
+            console.log('--JS--Joining room:', roomId);
             if (socket && socket.connected) {
                 socket.emit('join_room', { 
                     room_id: roomId,
                     room_name: roomName 
                 });
             } else {
+                console.error('Not connected to Socket.IO server');
                 alert('Not connected to server');
             }
         }

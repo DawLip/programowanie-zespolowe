@@ -223,6 +223,15 @@ def handle_join_room(data):
             'message': 'You are not a member of this room'
         })
 
+# Leave room
+@socketio.on('leave_room')
+@jwt_required()
+def handle_leave_room(data):
+    user_id = get_jwt_identity()
+    room_id = data['room_id']
+    print(f"User {user_id} wants to leave room {room_id}")
+    leave_room(room_id)
+
 @socketio.on('send_message')
 @jwt_required()
 def handle_send_message(data):
