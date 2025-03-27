@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Param } from '@nestjs/common';
 
 @Injectable()
 export class AppService {
@@ -61,5 +61,33 @@ export class AppService {
       friends: [friend,friend,friend,friend,friend,friend],
       groups: [group,group,group,group]
     })
+  }
+
+  getSearch(query): any {
+    const length = Math.floor(Math.random() * (8 - 3 + 1)) + 3;
+    const queryRes = {
+      id: 0,
+      name: "John",
+      surname: "Doe",
+      type: "user"
+    }
+    return Array.from({ length: length }, (_, i) => queryRes);
+  }
+
+  getGroup():any {
+    const user = {
+      id: 0,
+      name: "John",
+      surname: "Doe",
+    }
+    return {
+      id: 0,
+      type: "group",
+      name: "Python lovers",
+      about:"Python lovers group",
+      users: [user,user,user,user,user,user,user,user,user,user,user],
+      admins: [user,user,user,user],
+      owner: user
+    }
   }
 }
