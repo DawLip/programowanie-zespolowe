@@ -5,19 +5,19 @@ from datetime import datetime
 db = SQLAlchemy()
 
 class MessageType(Enum):
-    TEXT = 'text'
-    IMAGE = 'image'
-    VIDEO = 'video'
-    FILE = 'file'
+    TEXT = 'TEXT'
+    IMAGE = 'IMAGE'
+    VIDEO = 'VIDEO'
+    FILE = 'FILE'
 
 class RoomType(Enum):
-    PRIVATE = 'private'
-    GROUP = 'group'
+    PRIVATE = 'PRIVATE'
+    GROUP = 'GROUP'
 
 class Role(Enum):
-    USER = 0
-    ADMIN = 1
-    SUPERADMIN = 2  # Twórca czatu
+    USER = 'USER'
+    ADMIN = 'ADMIN'
+    SUPERADMIN = 'SUPERADMIN'
 
 # Model użytkownika
 class Users(db.Model):
