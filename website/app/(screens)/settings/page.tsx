@@ -1,9 +1,14 @@
 "use client"
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation'
+import Cookies from 'js-cookie';
+
 import {Header, Aside, Icon, Section, UserCard, Message, ProfileImage } from '../../components';
 
 export default function Settings() {
+  const router = useRouter();
+
   const u = { id: 0, name: 'John', surname:'Doe', lastMessage: "hey!", lastMessageAuthor:"you", isActive: true }
   const g = { id: 0, name: "Python lovers", lastMessage: "hey!", lastMessageAuthor:"you", isActive: true }
   const users = [u,u,u];
@@ -18,6 +23,8 @@ export default function Settings() {
   const [facebookURL, setFacebookURL] = useState("gfdsgdfsgdfs");
   const [instagramURL, setInstagramURL] = useState("gfdsgsdfgdfs");
   const [linkedinURL, setLinkedinURL] = useState("gfdsgfdsg");
+
+  useEffect(() => { if(!Cookies.get('token')) router.push('/login') },[] )
   
   return (
     <main className='grow'>

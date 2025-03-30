@@ -1,13 +1,19 @@
 "use client"
-import { use } from 'react';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation'
+import Cookies from 'js-cookie';
+
 import {Header, Aside, Icon, Section, UserCard, Message } from './components/';
 
 export default function Home() {
+  const router = useRouter();
+  
   const u = { id: 0, name: 'John', surname:'Doe', lastMessage: "hey!", lastMessageAuthor:"you", isActive: true }
   const g = { id: 0, name: "Python lovers", lastMessage: "hey!", lastMessageAuthor:"you", isActive: true }
   const users = [u,u,u,u,u,u];
   const groups = [g,g,g,g,g];
 
+  useEffect(() => { if(!Cookies.get('token')) router.push('/login') },[] )
   
   return (
     <main className='grow'>

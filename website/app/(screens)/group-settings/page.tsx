@@ -1,8 +1,13 @@
 "use client"
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation'
+import Cookies from 'js-cookie';
+
 import {Header, Aside, Icon, Section, UserCard, Message } from '../../components';
 
 export default function GroupSettings() {
+  const router = useRouter();
+
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
 
@@ -14,6 +19,7 @@ export default function GroupSettings() {
   const chatRef:any = useRef(null);
 
   useEffect(() => { if(chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight; }, [messages]);
+  useEffect(() => { if(!Cookies.get('token')) router.push('/login') },[] )
 
   return (
     <main className='max-h-screen'>

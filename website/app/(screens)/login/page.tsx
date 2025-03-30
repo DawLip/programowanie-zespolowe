@@ -1,5 +1,5 @@
 "use client"
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie';
 
@@ -21,10 +21,21 @@ export default function LoginScreen() {
       body: JSON.stringify({email, password}), 
     })
       .then(response => response.json())
-      .then(data => console.log('Sukces:', data))
+      .then(({access_token}:{access_token: string}) => {
+        if (access_token) {
+          Cookies.set('token', access_token);
+          router.push('/');
+        }
+      })
       .catch(error => console.error('Błąd:', error));
-    // Cookies.set('user', 'JohnDoe', { expires: 7 })
   }
+
+  useEffect(()=>{
+    const token = Cookies.get('token');
+    if (token) {
+      router.push('/');
+    }
+  },[])
 
   return (
     <main className="min-h-screen">

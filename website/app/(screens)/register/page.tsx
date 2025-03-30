@@ -1,15 +1,26 @@
 "use client"
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import Cookies from 'js-cookie';
 
 import TextInput from "../../components/TextInput";
 import Button from "../../components/Button";
 
 export default function LoginScreen() {
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [password, setPassword] = useState("");
   const [passwordR, setPasswordR] = useState("");
+
+  useEffect(()=>{
+    const token = Cookies.get('token');
+    if (token) {
+      router.push('/');
+    }
+  },[])
 
   return (
     <main className="min-h-screen">

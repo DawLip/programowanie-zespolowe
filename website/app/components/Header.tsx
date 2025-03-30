@@ -1,5 +1,6 @@
 "use client"
 import { useRouter } from 'next/navigation'
+import Cookies from 'js-cookie';
 
 import { Divider, Icon, ProfileImage } from './';
 
@@ -14,6 +15,11 @@ const Header =(
     backArrow?: boolean,
   }) => {
   const router = useRouter();
+
+  const logout = () => {
+    Cookies.remove('token');
+    router.push('/login');
+  }
   
   return (
     <header className='justify-between px-32 h-96'>
@@ -29,7 +35,7 @@ const Header =(
         <Divider color={"#7B7B7B"} vertical />
         <div className='items-center gap-16'>
           <Icon src={"/icons/settings.png"} size={32} onClick={()=>router.push('/settings')} />
-          <Icon src={"/icons/logout.png"} size={32} onClick={()=>router.push('/login')} />
+          <Icon src={"/icons/logout.png"} size={32} onClick={logout} />
         </div>
       </div>
     </header>
