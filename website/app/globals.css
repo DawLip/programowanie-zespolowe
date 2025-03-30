@@ -16,6 +16,7 @@
 body {
   font-family: Inter, Helvetica, sans-serif;
   min-height: 100vh;
+  
 }
 
 
@@ -28,3 +29,6 @@ main, div, section, footer, header,article, aside{
 .on_surface_light_gray { color: #A0A0A0 }
 .c_border { color: #565656 }
 .surface { background-color: #eee; }
+
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { scrollbar-width: none; }
