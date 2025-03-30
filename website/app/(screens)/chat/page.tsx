@@ -19,7 +19,7 @@ export default function ChatPage() {
     <main className='max-h-screen'>
       <Aside users={users} groups={groups} />
       <div className='flex-col grow pb-32'>
-        <Header header={"Welcome Adam"} name={"Adam"} surname={"Freineg"} />
+        <Header header={"Frank Drey"} name={"Adam"} surname={"Freineg"} backArrow />
         <main className='gap-32 px-32'>
           <section className='flex-1 flex-col gap-16'>
             <div 
@@ -48,7 +48,7 @@ export default function ChatPage() {
                 onChange={e=>setMessage(e.target.value)}
                 className='flex grow text-2xl on_surface_gray .placeholder-[#A0A0A0]'
               />
-              <Icon src={""} size={32} onClick={()=>{}}/>
+              <Icon src={"/icons/send.png"} size={32} onClick={()=>{}}/>
             </div>
           </section>
           <section 

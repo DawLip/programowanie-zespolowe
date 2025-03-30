@@ -1,12 +1,16 @@
 "use client"
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+
 import { ProfileImage } from './'
 
 import c from '../colors'
+import { log } from 'console';
 
 export default function Aside({ users, groups }:{users: any, groups: any}) {
   const [friendsOrGroups, setFriendsOrGroups] = useState(true)
+
   return (
     <aside className="sticky top-0 w-256 h-screen flex-col gap-16 p-16 surface">
       <header className="on_surface_gray text-3xl font-bold justify-center">
@@ -21,7 +25,7 @@ export default function Aside({ users, groups }:{users: any, groups: any}) {
           className="flex-col overflow-y-scroll scrollbar-none gap-16" 
           style={{height: "calc(100vh - 124px - 16px)"}}
         >
-          {users.map((u:any) => (<UserCard user={u}/>))}
+          {users.map((u:any) => <UserCard user={u}/>)}
         </div>
       </section>
     </aside>
@@ -29,8 +33,10 @@ export default function Aside({ users, groups }:{users: any, groups: any}) {
 }
 
 function UserCard({user}:{user: any}){
+  const router = useRouter();
+
   return (
-    <div className="gap-8 w-256">
+    <div className="gap-8 w-256" onClick={()=>router.push('/chat')}>
       <ProfileImage src={""} size={40} isActive={user.isActive} />
       <div className="flex-col gap-4 text-base/19">
         <div className="on_surface_gray font-semibold">

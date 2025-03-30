@@ -1,3 +1,4 @@
+"use client"
 import { use } from 'react';
 import {Header, Aside, Icon, Section, UserCard, Message } from './components/';
 
