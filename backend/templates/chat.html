@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #login-form, #chat-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #rooms-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .room-card {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #dee2e6;
+        }
+        .room-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        #room-chat {
+            margin-top: 20px;
+            display: none;
+        }
+        #messages-container {
+            height: 400px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .message {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .message-username {
+            font-weight: bold;
+            color: #333;
+        }
+        .message-time {
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-left: 10px;
+        }
+        .message-content {
+            margin-top: 5px;
+        }
+        #message-input {
+            width: calc(100% - 90px);
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+        #send-message-btn {
+            width: 80px;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #current-room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        #online-users {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 15px;
+        }
+        .error-message {
+            color: #dc3545;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="login-form">
+        <h2>Login</h2>
+        <input type="text" id="email" placeholder="Email" value="test@example.com">
+        <input type="password" id="password" placeholder="Password" value="password123">
+        <button id="login-btn">Login</button>
+        <div id="login-status" class="error-message"></div>
+    </div>
+
+    <div id="chat-section" style="display:none;">
+        <h2>Your Rooms</h2>
+        <div id="rooms-list"></div>
+        
+        <div id="room-chat">
+            <div id="current-room-header">
+                <h3>Chat in <span id="current-room-name"></span></h3>
+                <div id="online-users"></div>
+            </div>
+            
+            <div id="messages-container"></div>
+            
+            <div>
+                <input type="text" id="message-input" placeholder="Type your message">
+                <button id="send-message-btn">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        let socket;
+        let currentRoom = null;
+        let currentUser = null;
+
+        // Initialize the application
+        function init() {
+            setupEventListeners();
+            checkExistingSession();
+        }
+
+        // Set up all event listeners
+        function setupEventListeners() {
+            document.getElementById('login-btn').addEventListener('click', handleLogin);
+            document.getElementById('send-message-btn').addEventListener('click', sendMessage);
+            document.getElementById('message-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+        }
+
+        // Check for existing session
+        function checkExistingSession() {
+            const token = localStorage.getItem('jwtToken');
+            if (token) {
+                connectSocket(token);
+                loadRooms();
+                document.getElementById('login-form').style.display = 'none';
+                document.getElementById('chat-section').style.display = 'block';
+            }
+        }
+
+        // Handle login
+        async function handleLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            document.getElementById('login-status').textContent = '';
+            
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.access_token) {
+                    localStorage.setItem('jwtToken', data.access_token);
+                    currentUser = data.user_id;  // Assuming backend returns user_id
+                    document.getElementById('login-form').style.display = 'none';
+                    document.getElementById('chat-section').style.display = 'block';
+                    connectSocket(data.access_token);
+                    loadRooms();
+                } else {
+                    document.getElementById('login-status').textContent = data.message || 'Login failed';
+                }
+            } catch (error) {
+                document.getElementById('login-status').textContent = 'Failed to connect to server';
+                console.error('Login error:', error);
+            }
+        }
+
+        // Connect to Socket.IO
+        function connectSocket(token) {
+            socket = io({
+                extraHeaders: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            // Socket.IO event handlers
+            socket.on('connect', () => {
+                console.log('Connected to Socket.IO server');
+            });
+
+            socket.on('room_joined', (data) => {
+                currentRoom = data.room_id;
+                document.getElementById('current-room-name').textContent = data.room_name || data.room_id;
+                document.getElementById('room-chat').style.display = 'block';
+                loadRoomMessages(data.room_id);
+            });
+
+            socket.on('new_message', (message) => {
+                addMessageToUI(message);
+            });
+
+            socket.on('user_joined', (data) => {
+                addSystemMessage(`${data.username} joined the room`);
+                updateOnlineUsers(data.users);
+            });
+
+            socket.on('user_left', (data) => {
+                addSystemMessage(`${data.username} left the room`);
+                updateOnlineUsers(data.users);
+            });
+
+            socket.on('error', (error) => {
+                console.error('Socket error:', error);
+                alert(`Error: ${error.message}`);
+            });
+        }
+
+        // Load user's rooms
+        async function loadRooms() {
+            try {
+                const token = localStorage.getItem('jwtToken');
+                const response = await fetch('/api/my-rooms', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const data = await response.json();
+                
+                if (data.rooms) {
+                    const roomsList = document.getElementById('rooms-list');
+                    roomsList.innerHTML = data.rooms.map(room => `
+                        <div class="room-card" onclick="joinRoom(${room.id}, '${room.name}')">
+                            <h4>${room.name}</h4>
+                            <p>ID: ${room.id}</p>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading rooms:', error);
+            }
+        }
+
+        // Join a room
+        function joinRoom(roomId, roomName) {
+            console.log('--JS--Joining room:', roomId);
+            if (socket && socket.connected) {
+                socket.emit('join_room', { 
+                    room_id: roomId,
+                    room_name: roomName 
+                });
+            } else {
+                console.error('Not connected to Socket.IO server');
+                alert('Not connected to server');
+            }
+        }
+
+        // Load room messages
+        async function loadRoomMessages(roomId) {
+            try {
+                const token = localStorage.getItem('jwtToken');
+                const response = await fetch(`/api/rooms/${roomId}/messages`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const data = await response.json();
+                const container = document.getElementById('messages-container');
+                container.innerHTML = '';
+                
+                if (Array.isArray(data)) {
+                    data.forEach(msg => addMessageToUI(msg));
+                    container.scrollTop = container.scrollHeight;
+                }
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        }
+
+        // Send a message
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (message && currentRoom && socket) {
+                socket.emit('send_message', {
+                    room_id: currentRoom,
+                    message: message
+                });
+                input.value = '';
+            }
+        }
+
+        // Add message to UI
+        function addMessageToUI(message) {
+            const container = document.getElementById('messages-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            
+            messageDiv.innerHTML = `
+                <div>
+                    <span class="message-username">${message.name}</span>
+                    <span class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</span>
+                </div>
+                <div class="message-content">${message.message}</div>
+            `;
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Add system message to UI
+        function addSystemMessage(text) {
+            const container = document.getElementById('messages-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message system-message';
+            messageDiv.textContent = text;
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Update online users list
+        function updateOnlineUsers(users) {
+            const onlineUsersDiv = document.getElementById('online-users');
+            onlineUsersDiv.innerHTML = `
+                <h4>Online (${users.length})</h4>
+                <ul>
+                    ${users.map(user => `<li>${user}</li>`).join('')}
+                </ul>
+            `;
+        }
+
+        // Initialize the app when page loads
+        window.onload = init;
+    </script>
+</body>
+</html>
