@@ -130,6 +130,59 @@ def search_users():
             "status": "error",
             "message": str(e)
         }), 500
+
+# Zwraca dane użytkownika po ID, wymaga autoryzacji JWT
+@app.route('/user/<int:user_id>', methods=['GET'])
+@jwt_required()
+def get_user_by_id(user_id):
+    user = Users.query.get(user_id)
+    if not user:
+        return jsonify({"status": "error"}), 404
+
+    # Serializacja znajomych
+    friends = [{
+        "id": f.id
+    } for f in user.friends] if hasattr(user, 'friends') else []
+
+    return jsonify({
+        "id": user.id,
+        "password": user.password,
+        "email": user.email,
+        "name": user.name,
+        "surname": user.surname,
+        "phone": user.phone,
+        "address": user.address,
+        "facebook": user.facebook,
+        "instagram": user.instagram,
+        "linkedin": user.linkedin,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+        "updated_at": user.updated_at.isoformat() if user.updated_at else None,
+        "friends": friends
+    }), 200
+
+
+# Aktualizuje dane użytkownika po ID, wymaga JWT
+@app.route('/user/<int:user_id>', methods=['POST'])
+@jwt_required()
+def update_user_by_id(user_id):
+    user = Users.query.get(user_id)
+    if not user:
+        return jsonify({"status": "error"}), 404
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"status": "error"}), 400
+
+    user.name = data.get('name', user.name)
+    user.surname = data.get('surname', user.surname)
+    user.email = data.get('email', user.email)
+
+    try:
+        db.session.commit()
+        return jsonify({"status": "ok"}), 200
+    except Exception:
+        db.session.rollback()
+        return jsonify({"status": "error"}), 500
     
 ##############################  |
 ###Funkcje tylko do przykladu#  |

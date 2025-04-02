@@ -36,6 +36,15 @@ class Users(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # Relacja friends
+    friends = db.database(
+        'Users',
+        secondary='friends',
+        primaryjoin=id == Friends.user_id,
+        secondaryjoin=id == Friends.friend_id,
+        backref='friends_back'
+    )
+
     def __repr__(self):
         return f'<User {self.email}>'
 
