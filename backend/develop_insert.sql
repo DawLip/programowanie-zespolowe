@@ -9,7 +9,7 @@ VALUES
 INSERT INTO room (type, name, created_at)
 VALUES 
     ('GROUP', 'General Chat', datetime('now')),
-    ('GROUP', 'John''s Private Room', datetime('now'));
+    ('GROUP', 'Private Room', datetime('now'));
 
 -- Add users to rooms
 INSERT INTO room_users (room_id, user_id, role, joined_at)
