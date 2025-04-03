@@ -2,3 +2,4 @@
 /website/.next
 /fake-api/node_modules
 /fake-api/dist
+backend/__pycache__
