@@ -1,28 +1,27 @@
-from flask import Flask, jsonify, request, abort, render_template, redirect, url_for
+from flask import Flask, jsonify, request, render_template
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-from models import db, Users, Messages, Room, Room_Users, Role, MessageType
-from flask_socketio import SocketIO, emit, join_room, leave_room
+from models import db, Users, Messages, Room, Room_Users, MessageType
+from flask_socketio import SocketIO
 from sqlalchemy.orm import sessionmaker
-import bcrypt
-from flask import request, jsonify
 from sqlalchemy import or_, and_
+from sockets import register_socket_handlers
 
 app = Flask(__name__)
-# Konfiguracja JWT
 app.config['JWT_SECRET_KEY'] = 'super-secret-key'
-jwt = JWTManager(app)
-
-# Konfiguracja Socket.IO
-socketio = SocketIO(app)
-
-# Konfiguracja bazy danych SQLite
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db.init_app(app) # Inicjalizacja bazy danych
+# Initialize extensions
+jwt = JWTManager(app)
+db.init_app(app)
+socketio = SocketIO(app)
+
+# Register socket handlers
+register_socket_handlers(socketio)
+
+# Create database tables
 with app.app_context():
-    db.create_all()  # Tworzenie tabel w bazie danych
-    # Konfiguracja sesji
+    db.create_all()
     Session = sessionmaker(bind=db.engine)
     session = Session()
 
@@ -245,83 +244,6 @@ def get_room_messages(room_id):
         'message_type': msg.Messages.message_type.value  # Get enum value
     } for msg in messages])
 
-################# SOCKETIO #################
-
-@socketio.on('connect')
-@jwt_required()
-def handle_connect():
-    print("\n=== SocketIO connected ===")
-    user_id = get_jwt_identity()
-    print(f"User {user_id} connected")
-    socketio.emit('connection_established', {'user_id': user_id})
-
-@socketio.on('join_room')
-@jwt_required()
-def handle_join_room(data):
-    print("\n=== SocketIO join_room called ===")
-    user_id = get_jwt_identity()
-    room_id = data['room_id']
-    
-    print(f"User {user_id} wants to join room {room_id}")
-    
-    # Check if user is a member of the room
-    if Room_Users.query.filter_by(user_id=user_id, room_id=room_id).first():
-        join_room(room_id)  # <-- This is the correct way to join a room
-        emit('room_joined', {
-            'room_id': room_id,
-            'message': f'Successfully joined room {room_id}'
-        }, room=room_id)
-    else:
-        emit('join_error', {
-            'message': 'You are not a member of this room'
-        })
-
-# Leave room
-@socketio.on('leave_room')
-@jwt_required()
-def handle_leave_room(data):
-    user_id = get_jwt_identity()
-    room_id = data['room_id']
-    print(f"User {user_id} wants to leave room {room_id}")
-    leave_room(room_id)
-
-@socketio.on('send_message')
-@jwt_required()
-def handle_send_message(data):
-    try:
-        user_id = get_jwt_identity()
-        room_id = data['room_id']
-        message_content = data['message']
-
-        print(f"User {user_id} wants to send message to room {room_id}: {message_content}")
-        
-        # Verify room membership
-        if not Room_Users.query.filter_by(user_id=user_id, room_id=room_id).first():
-            emit('message_error', {'message': 'Not authorized to send to this room'})
-            return
-        
-        # Save message to database (optional)
-        new_message = Messages(
-            user_id=user_id,
-            room_id=room_id,
-            content=message_content,
-            message_type= MessageType.TEXT
-        )
-        db.session.add(new_message)
-        db.session.commit()
-        
-        # Broadcast to room
-        emit('new_message', {
-            'user_id': user_id,
-            'room_id': room_id,
-            'message': message_content,
-            'timestamp': new_message.timestamp.isoformat(),
-            'name': Users.query.filter_by(id=user_id).first().name
-        }, room=room_id)
-        
-    except Exception as e:
-        print(f"Error sending message: {str(e)}")
-        emit('message_error', {'message': 'Failed to send message'})
 
 
 
