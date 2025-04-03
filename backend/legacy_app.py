@@ -1,10 +1,10 @@
 from flask import Flask, jsonify, request, render_template
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-from models import db, Users, Messages, Room, Room_Users, MessageType
+from backend.app.models import db, Users, Messages, Room, Room_Users, MessageType
 from flask_socketio import SocketIO
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import or_, and_
-from sockets import register_socket_handlers
+from backend.app.sockets import register_socket_handlers
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = 'super-secret-key'

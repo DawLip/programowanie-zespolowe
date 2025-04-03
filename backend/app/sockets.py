@@ -1,6 +1,6 @@
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_socketio import emit, join_room, leave_room
-from models import Users, Messages, Room_Users, MessageType, db
+from app.models import Users, Messages, Room_Users, MessageType, db
 
 def register_socket_handlers(socketio):
     @socketio.on('connect')
