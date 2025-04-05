@@ -1,4 +1,5 @@
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended.exceptions import JWTExtendedException  # General JWT error
 from flask_socketio import emit, join_room, leave_room
 from app.models import Users, Messages, Room_Users, MessageType, db
 
@@ -6,10 +7,20 @@ def register_socket_handlers(socketio):
     @socketio.on('connect')
     @jwt_required()
     def handle_connect():
-        print("\n=== SocketIO connected ===")
-        user_id = get_jwt_identity()
-        print(f"User {user_id} connected")
-        emit('connection_established', {'user_id': user_id})
+        try:
+            print("\n=== SocketIO connected ===")
+            user_id = get_jwt_identity()
+            print(f"User {user_id} connected")
+            emit('connection_established', {'user_id': user_id})
+            return {'status': 'ok'}
+        # authorization error
+        except JWTExtendedException as e:
+            print(f"Authorisation error: {str(e)}")
+            return {'status': 'authorisation error'}
+        # server error
+        except Exception as e:
+            print(f"Error connecting: {str(e)}")
+            return {'status': 'server error'}
 
     @socketio.on('join_room')
     @jwt_required()
@@ -17,6 +28,7 @@ def register_socket_handlers(socketio):
         print("\n=== SocketIO join_room called ===")
         user_id = get_jwt_identity()
         room_id = data['room_id']
+        print("room_id is:", room_id)
         
         print(f"User {user_id} wants to join room {room_id}")
         
