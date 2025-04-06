@@ -72,31 +72,45 @@ def register_socket_handlers(socketio):
     def handle_send_message(data):
         try:
             user_id = get_jwt_identity()
-            room_id = data['room_id']
+            room_id = data['room']  # Zmiana z 'room_id' na 'room'
             message_content = data['message']
+            message_type = data.get('message_type', MessageType.TEXT) # Only TEXT for now
 
-            print(f"User {user_id} wants to send message to room {room_id}: {message_content}")
+            print(f"User {user_id} sending message to room {room_id}: {message_content}")
             
+            # Sprawdź uprawnienia
             if not Room_Users.query.filter_by(user_id=user_id, room_id=room_id).first():
+                print(f"User {user_id} is not authorized to send to room {room_id}")
                 emit('message_error', {'message': 'Not authorized to send to this room'})
                 return
             
+            print(f"User {user_id} is authorized to send to room {room_id}")
+            # Utwórz i zapisz wiadomość
             new_message = Messages(
                 user_id=user_id,
                 room_id=room_id,
                 content=message_content,
-                message_type=MessageType.TEXT
+                message_type=message_type  # Użyj typu z requestu
             )
             db.session.add(new_message)
             db.session.commit()
+            print(f"Message saved with ID: {new_message.id}")
             
-            emit('new_message', {
-                'user_id': user_id,
-                'room_id': room_id,
+            # Pobierz dane użytkownika
+            user = Users.query.filter_by(id=user_id).first()
+            
+            # Przygotuj odpowiedź zgodną z dokumentacją
+            print(f"Sending response: {user.name}, {user.surname}, {message_content}, {new_message.timestamp}")
+            response = {
+                'name': user.name,
+                'surname': user.surname,  # Dodane
                 'message': message_content,
-                'timestamp': new_message.timestamp.isoformat(),
-                'name': Users.query.filter_by(id=user_id).first().name
-            }, room=room_id)
+                'date': new_message.timestamp.isoformat()  # Nazwa pola 'date' zamiast 'timestamp'
+            }
+            
+            # Wyślij do wszystkich w pokoju
+            print(f"Sending response to room {room_id}: {response}")
+            emit('new_message', response, room=room_id)
             
         except Exception as e:
             print(f"Error sending message: {str(e)}")

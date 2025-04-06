@@ -106,6 +106,11 @@
             text-align: center;
             margin: 10px 0;
         }
+        .typing-indicator {
+            color: #6c757d;
+            font-style: italic;
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
@@ -128,6 +133,7 @@
             </div>
             
             <div id="messages-container"></div>
+            <div id="typing-indicator" class="typing-indicator" style="display:none;"></div>
             
             <div>
                 <input type="text" id="message-input" placeholder="Type your message">
@@ -142,6 +148,7 @@
         let currentRoom = null;
         let currentUser = null;
         let userRooms = [];
+        let typingTimeout;
 
         // Initialize the application
         function init() {
@@ -153,8 +160,21 @@
         function setupEventListeners() {
             document.getElementById('login-btn').addEventListener('click', handleLogin);
             document.getElementById('send-message-btn').addEventListener('click', sendMessage);
-            document.getElementById('message-input').addEventListener('keypress', (e) => {
+            
+            const messageInput = document.getElementById('message-input');
+            messageInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') sendMessage();
+            });
+            
+            // Typing indicator events
+            messageInput.addEventListener('input', () => {
+                if (currentRoom) {
+                    socket.emit('typing', { room: currentRoom });
+                    clearTimeout(typingTimeout);
+                    typingTimeout = setTimeout(() => {
+                        socket.emit('stop_typing', { room: currentRoom });
+                    }, 2000);
+                }
             });
         }
 
@@ -213,36 +233,37 @@
                 console.log('Connected to Socket.IO server');
             });
 
+            socket.on('connection_established', (data) => {
+                console.log('Connection established:', data);
+            });
+
             socket.on('join_room_response', (response) => {
                 console.log('Join room response:', response);
                 
                 if (response.status === 'ok') {
-                    const roomId = response.room_id;
-                    console.log(`Successfully joined room ${roomId}`);
-                    
-                    // Update UI to show active room
-                    document.querySelectorAll('.room-card').forEach(card => {
-                        if (card.dataset.roomId === roomId.toString()) {
-                            card.classList.add('active');
-                        }
-                    });
-                    
-                    // If this is the first room joined, show its chat
-                    if (!currentRoom) {
-                        selectRoom(roomId);
-                    }
+                    console.log('Successfully joined rooms');
+                    updateRoomUI(userRooms.map(room => room.id));
                 } else {
-                    console.error(`Failed to join room ${response.room_id}: ${response.message}`);
-                    alert(`Failed to join room: ${response.message}`);
+                    console.error('Failed to join rooms:', response.message);
+                    alert(`Failed to join rooms: ${response.message}`);
                 }
             });
 
+            // Update the socket.io message handler
             socket.on('new_message', (message) => {
-                // Only show message if it's for the current room
-                if (message.room_id === currentRoom) {
-                    addMessageToUI(message);
+                console.log('New message received:', message);
+                
+                // Check if message is for current room (handling both formats)
+                const messageRoom = message.room_id || message.room;
+                if (messageRoom === currentRoom) {
+                    addMessageToUI({
+                        name: message.name,
+                        surname: message.surname,
+                        content: message.message || message.content,
+                        timestamp: message.date || message.timestamp
+                    });
                 }
-            });
+});
 
             socket.on('user_joined', (data) => {
                 if (data.room_id === currentRoom) {
@@ -255,6 +276,18 @@
                 if (data.room_id === currentRoom) {
                     addSystemMessage(`${data.username} left the room`);
                     updateOnlineUsers(data.users);
+                }
+            });
+
+            socket.on('typing', (data) => {
+                if (data.room === currentRoom && data.userId !== currentUser) {
+                    showTypingIndicator(data.username);
+                }
+            });
+
+            socket.on('stop_typing', (data) => {
+                if (data.room === currentRoom) {
+                    hideTypingIndicator();
                 }
             });
 
@@ -299,27 +332,11 @@
         }
 
         // Join rooms
-        // Updated joinRooms function
         function joinRooms(roomIds) {
             console.log('Joining rooms:', roomIds);
             if (socket && socket.connected) {
                 socket.emit('join_room', { 
                     rooms: Array.isArray(roomIds) ? roomIds : [roomIds]
-                });
-
-                // Listen for response (no room_id needed)
-                socket.once('join_room_response', (response) => {
-                    console.log('Join rooms response:', response.status);
-                    if (response.status === 'ok') {
-                        console.log('Successfully joined all authorized rooms');
-                        // Since we don't know which rooms succeeded, we'll:
-                        // 1. Assume all rooms were joined successfully
-                        // 2. Update UI based on which rooms we requested
-                        updateRoomUI(roomIds);
-                    } else {
-                        console.error('Failed to join rooms:', response.message);
-                        alert(`Failed to join rooms: ${response.message}`);
-                    }
                 });
             } else {
                 console.error('Not connected to Socket.IO server');
@@ -327,7 +344,7 @@
             }
         }
 
-        // New function to update UI based on requested rooms
+        // Update UI based on requested rooms
         function updateRoomUI(requestedRoomIds) {
             // Mark all requested rooms as "joined" in UI
             document.querySelectorAll('.room-card').forEach(card => {
@@ -343,7 +360,7 @@
             }
         }
 
-        // Modified selectRoom function (no changes needed to signature)
+        // Select a room to view its chat
         async function selectRoom(roomId) {
             const room = userRooms.find(r => r.id === roomId);
             if (!room) return;
@@ -377,7 +394,12 @@
                 container.innerHTML = '';
                 
                 if (Array.isArray(data)) {
-                    data.forEach(msg => addMessageToUI(msg));
+                    data.forEach(msg => addMessageToUI({
+                        name: msg.name,
+                        surname: msg.surname,
+                        content: msg.content || msg.message,
+                        timestamp: msg.timestamp || msg.date
+                    }));
                     container.scrollTop = container.scrollHeight;
                 }
             } catch (error) {
@@ -392,14 +414,20 @@
             
             if (message && currentRoom && socket) {
                 socket.emit('send_message', {
-                    room_id: currentRoom,
-                    message: message
+                    room: currentRoom,  // Must match backend expectation
+                    message: message,
+                    message_type: 'TEXT'
+                }, (response) => {
+                    // Optional: handle acknowledgement
+                    if (response && response.error) {
+                        console.error('Error sending message:', response.error);
+                    }
                 });
                 input.value = '';
+                socket.emit('stop_typing', { room: currentRoom });
             }
         }
 
-        // Add message to UI
         function addMessageToUI(message) {
             const container = document.getElementById('messages-container');
             const messageDiv = document.createElement('div');
@@ -407,8 +435,8 @@
             
             messageDiv.innerHTML = `
                 <div>
-                    <span class="message-username">${message.username || 'Unknown'}</span>
-                    <span class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</span>
+                    <span class="message-username">${message.name || 'Unknown'} ${message.surname || ''}</span>
+                    <span class="message-time">${formatDate(message.timestamp)}</span>
                 </div>
                 <div class="message-content">${message.content || message.message}</div>
             `;
@@ -416,6 +444,18 @@
             container.appendChild(messageDiv);
             container.scrollTop = container.scrollHeight;
         }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return '';
+            try {
+                const date = new Date(timestamp);
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } catch (e) {
+                console.error('Error formatting date:', e);
+                return '';
+            }
+        }
+
 
         // Add system message to UI
         function addSystemMessage(text) {
@@ -425,6 +465,19 @@
             messageDiv.textContent = text;
             container.appendChild(messageDiv);
             container.scrollTop = container.scrollHeight;
+        }
+
+        // Show typing indicator
+        function showTypingIndicator(username) {
+            const indicator = document.getElementById('typing-indicator');
+            indicator.textContent = `${username} is typing...`;
+            indicator.style.display = 'block';
+        }
+
+        // Hide typing indicator
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            indicator.style.display = 'none';
         }
 
         // Update online users list
