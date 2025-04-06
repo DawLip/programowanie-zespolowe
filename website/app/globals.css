@@ -17,18 +17,36 @@ body {
   font-family: Inter, Helvetica, sans-serif;
   min-height: 100vh;
   
-}
 
+}
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { scrollbar-width: none; }
 
 main, div, section, footer, header,article, aside{
   display: flex;
 }
 
-.on_surface_white { color: #EAE5E5 }
-.on_surface_gray { color: #565656 }
-.on_surface_light_gray { color: #A0A0A0 }
-.c_border { color: #565656 }
-.surface { background-color: #eee; }
+.bgc { background-color: hsla(284, 85%, 99%, 1); }
+.white { color: white }
 
-.scrollbar-none::-webkit-scrollbar { display: none; }
-.scrollbar-none { scrollbar-width: none; }
+.on_surface_white { color: hsla(284, 16%, 49%, 1) }
+.on_surface_gray { color: "#4E3D55" }
+.on_surface_light_gray { color: hsla(283, 15%, 62%, 1) }
+.on_nav { color: hsla(284, 86%, 95%, 0.8) }
+.c_border { color: hsla(0, 0%, 48%, 1) }
+.surface { background-color: hsla(284, 82%, 98%, 1); }
+.msg { background-color: hsla(284, 73%, 46%, 1);}
+.on_bgc_primary {color: hsla(284, 85%, 29%, 1);}
+
+.aside_bg { 
+  background: radial-gradient(78.88% 13.76% at 47.85% 0%, rgba(104, 11, 138, 0.80) 0%, rgba(104, 11, 138, 0.00) 100%), linear-gradient(183deg, #1D0127 0.52%, #37034A 45.29%, #37034A 66.18%, #1D0127 100%); 
+  box-shadow: 4px 0px 4px 0px rgba(0, 0, 0, 0.25);
+}
+.isActive { background-color: hsla(138, 85%, 36%, 1)}
+.login_bg { 
+  background: linear-gradient(186deg, #1D0127 0%, #410457 45%, #410457 62.5%, #1D0127 100%);
+  box-shadow: 4px 0px 8px 0px rgba(0, 0, 0, 0.25);
+}
+.login_cards_shadow {
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.50);
+}

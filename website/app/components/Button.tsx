@@ -24,11 +24,19 @@ const s = {
     fontSize: "24px",
   },
   filled:{
-    backgroundColor: c.on_surface_light_gray,
+    backgroundColor: c.primary,
     color: c.on_surface_white,
     fontWeight: "bold",
   },
   outlined: {
-    border: `1px solid ${c.border}`,
+    border: `4px solid ${c.primary}`,
+    color: c.primary
+  },
+  outlined2: {
+    borderRadius: 32,
+    border: '4px solid #9D20C9',
+    color: "#fff",
+    fontSize: "20px",
+    padding: "8px 32px",
   }
 }

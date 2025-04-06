@@ -29,6 +29,7 @@ with app.app_context():
 # Strona główna z listą użytkowników
 @app.route('/')
 def index():
+    print(Users.query.all())
     users = Users.query.all()
     return render_template('chat.html', users=users)
 
@@ -76,7 +77,7 @@ def login():
 
     if not email or not password:
         return jsonify({"status": "error", "message": "Missing email or password"}), 400
-
+    print(Users.query.all())
     user = Users.query.filter_by(email=email).first()
 
     if not user:
