@@ -27,21 +27,37 @@ def register_socket_handlers(socketio):
     def handle_join_room(data):
         print("\n=== SocketIO join_room called ===")
         user_id = get_jwt_identity()
-        room_id = data['room_id']
-        print("room_id is:", room_id)
-        
-        print(f"User {user_id} wants to join room {room_id}")
-        
-        if Room_Users.query.filter_by(user_id=user_id, room_id=room_id).first():
-            join_room(room_id)
-            emit('room_joined', {
-                'room_id': room_id,
-                'message': f'Successfully joined room {room_id}'
-            }, room=room_id)
-        else:
-            emit('join_error', {
-                'message': 'You are not a member of this room'
+        room_ids = data.get('rooms', [])
+
+        if not isinstance(room_ids, list):
+            emit('join_room_response', {
+                'status': 'server error',
+                'message': 'Invalid rooms format - expected array'
             })
+            return
+
+        for room_id in room_ids:
+            try:
+                print(f"User {user_id} attempting to join room {room_id}")
+                
+                if Room_Users.query.filter_by(user_id=user_id, room_id=room_id).first():
+                    join_room(room_id)
+                    emit('join_room_response', {
+                        'status': 'ok',
+                        f'message': 'Successfully joined room {room_id}'  # Generic success message
+                    })
+                else:
+                    emit('join_room_response', {
+                        'status': 'authorisation error',
+                        f'message': 'Not authorized to join room {room_id}'
+                    })
+
+            except Exception as e:
+                print(f"Error joining room {room_id}: {str(e)}")
+                emit('join_room_response', {
+                    'status': 'server error',
+                    'message': 'Failed to join rooms'
+                })
 
     @socketio.on('leave_room')
     @jwt_required()

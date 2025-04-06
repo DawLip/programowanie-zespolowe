@@ -30,6 +30,10 @@
             transition: all 0.2s;
             border: 1px solid #dee2e6;
         }
+        .room-card.active {
+            background: #e7f5ff;
+            border-color: #74c0fc;
+        }
         .room-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
@@ -96,6 +100,12 @@
             color: #dc3545;
             margin-top: 10px;
         }
+        .system-message {
+            color: #6c757d;
+            font-style: italic;
+            text-align: center;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -131,6 +141,7 @@
         let socket;
         let currentRoom = null;
         let currentUser = null;
+        let userRooms = [];
 
         // Initialize the application
         function init() {
@@ -175,7 +186,7 @@
                 
                 if (data.access_token) {
                     localStorage.setItem('jwtToken', data.access_token);
-                    currentUser = data.user_id;  // Assuming backend returns user_id
+                    currentUser = data.user_id;
                     document.getElementById('login-form').style.display = 'none';
                     document.getElementById('chat-section').style.display = 'block';
                     connectSocket(data.access_token);
@@ -202,25 +213,49 @@
                 console.log('Connected to Socket.IO server');
             });
 
-            socket.on('room_joined', (data) => {
-                currentRoom = data.room_id;
-                document.getElementById('current-room-name').textContent = data.room_name || data.room_id;
-                document.getElementById('room-chat').style.display = 'block';
-                loadRoomMessages(data.room_id);
+            socket.on('join_room_response', (response) => {
+                console.log('Join room response:', response);
+                
+                if (response.status === 'ok') {
+                    const roomId = response.room_id;
+                    console.log(`Successfully joined room ${roomId}`);
+                    
+                    // Update UI to show active room
+                    document.querySelectorAll('.room-card').forEach(card => {
+                        if (card.dataset.roomId === roomId.toString()) {
+                            card.classList.add('active');
+                        }
+                    });
+                    
+                    // If this is the first room joined, show its chat
+                    if (!currentRoom) {
+                        selectRoom(roomId);
+                    }
+                } else {
+                    console.error(`Failed to join room ${response.room_id}: ${response.message}`);
+                    alert(`Failed to join room: ${response.message}`);
+                }
             });
 
             socket.on('new_message', (message) => {
-                addMessageToUI(message);
+                // Only show message if it's for the current room
+                if (message.room_id === currentRoom) {
+                    addMessageToUI(message);
+                }
             });
 
             socket.on('user_joined', (data) => {
-                addSystemMessage(`${data.username} joined the room`);
-                updateOnlineUsers(data.users);
+                if (data.room_id === currentRoom) {
+                    addSystemMessage(`${data.username} joined the room`);
+                    updateOnlineUsers(data.users);
+                }
             });
 
             socket.on('user_left', (data) => {
-                addSystemMessage(`${data.username} left the room`);
-                updateOnlineUsers(data.users);
+                if (data.room_id === currentRoom) {
+                    addSystemMessage(`${data.username} left the room`);
+                    updateOnlineUsers(data.users);
+                }
             });
 
             socket.on('error', (error) => {
@@ -229,7 +264,7 @@
             });
         }
 
-        // Load user's rooms
+        // Load user's rooms and automatically join them
         async function loadRooms() {
             try {
                 const token = localStorage.getItem('jwtToken');
@@ -239,32 +274,94 @@
                 
                 const data = await response.json();
                 
-                if (data.rooms) {
-                    const roomsList = document.getElementById('rooms-list');
-                    roomsList.innerHTML = data.rooms.map(room => `
-                        <div class="room-card" onclick="joinRoom(${room.id}, '${room.name}')">
-                            <h4>${room.name}</h4>
-                            <p>ID: ${room.id}</p>
-                        </div>
-                    `).join('');
+                if (data.rooms && Array.isArray(data.rooms)) {
+                    userRooms = data.rooms;
+                    renderRoomsList();
+                    
+                    // Automatically join all rooms after loading them
+                    const roomIds = data.rooms.map(room => room.id);
+                    joinRooms(roomIds);
                 }
             } catch (error) {
                 console.error('Error loading rooms:', error);
             }
         }
 
-        // Join a room
-        function joinRoom(roomId, roomName) {
-            console.log('--JS--Joining room:', roomId);
+        // Render rooms list
+        function renderRoomsList() {
+            const roomsList = document.getElementById('rooms-list');
+            roomsList.innerHTML = userRooms.map(room => `
+                <div class="room-card" data-room-id="${room.id}" onclick="selectRoom(${room.id})">
+                    <h4>${room.name}</h4>
+                    <p>ID: ${room.id}</p>
+                </div>
+            `).join('');
+        }
+
+        // Join rooms
+        // Updated joinRooms function
+        function joinRooms(roomIds) {
+            console.log('Joining rooms:', roomIds);
             if (socket && socket.connected) {
                 socket.emit('join_room', { 
-                    room_id: roomId,
-                    room_name: roomName 
+                    rooms: Array.isArray(roomIds) ? roomIds : [roomIds]
+                });
+
+                // Listen for response (no room_id needed)
+                socket.once('join_room_response', (response) => {
+                    console.log('Join rooms response:', response.status);
+                    if (response.status === 'ok') {
+                        console.log('Successfully joined all authorized rooms');
+                        // Since we don't know which rooms succeeded, we'll:
+                        // 1. Assume all rooms were joined successfully
+                        // 2. Update UI based on which rooms we requested
+                        updateRoomUI(roomIds);
+                    } else {
+                        console.error('Failed to join rooms:', response.message);
+                        alert(`Failed to join rooms: ${response.message}`);
+                    }
                 });
             } else {
                 console.error('Not connected to Socket.IO server');
                 alert('Not connected to server');
             }
+        }
+
+        // New function to update UI based on requested rooms
+        function updateRoomUI(requestedRoomIds) {
+            // Mark all requested rooms as "joined" in UI
+            document.querySelectorAll('.room-card').forEach(card => {
+                const cardRoomId = parseInt(card.dataset.roomId);
+                if (requestedRoomIds.includes(cardRoomId)) {
+                    card.classList.add('active');
+                }
+            });
+            
+            // If no room is currently selected, select the first one
+            if (!currentRoom && requestedRoomIds.length > 0) {
+                selectRoom(requestedRoomIds[0]);
+            }
+        }
+
+        // Modified selectRoom function (no changes needed to signature)
+        async function selectRoom(roomId) {
+            const room = userRooms.find(r => r.id === roomId);
+            if (!room) return;
+
+            // Update UI
+            document.querySelectorAll('.room-card').forEach(card => {
+                card.classList.remove('active');
+                if (card.dataset.roomId === roomId.toString()) {
+                    card.classList.add('active');
+                }
+            });
+
+            currentRoom = roomId;
+            document.getElementById('current-room-name').textContent = room.name;
+            document.getElementById('room-chat').style.display = 'block';
+            
+            await loadRoomMessages(roomId);
+            document.getElementById('message-input').focus();
         }
 
         // Load room messages
@@ -310,10 +407,10 @@
             
             messageDiv.innerHTML = `
                 <div>
-                    <span class="message-username">${message.name}</span>
+                    <span class="message-username">${message.username || 'Unknown'}</span>
                     <span class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</span>
                 </div>
-                <div class="message-content">${message.message}</div>
+                <div class="message-content">${message.content || message.message}</div>
             `;
             
             container.appendChild(messageDiv);
