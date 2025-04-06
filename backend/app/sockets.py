@@ -7,6 +7,13 @@ def register_socket_handlers(socketio):
     @socketio.on('connect')
     @jwt_required()
     def handle_connect():
+        """
+        Handle the initial connection of the user to the SocketIO server.
+
+        Returns:
+            dict: A JSON-serializable dictionary with the user's ID and status.
+        """
+
         try:
             print("\n=== SocketIO connected ===")
             user_id = get_jwt_identity()
@@ -25,6 +32,26 @@ def register_socket_handlers(socketio):
     @socketio.on('join_room')
     @jwt_required()
     def handle_join_room(data):
+        """
+        Handle the 'join_room' event sent by the client. This event should contain
+        an array of room IDs that the user wants to join.
+
+        Parameters:
+            data (dict): A JSON-serializable dictionary containing the room IDs to
+                join. The dictionary should have a single key called 'rooms' which
+                has an array of integers as its value.
+
+        Returns:
+            dict: A JSON-serializable dictionary with the status of the join
+                operation. The dictionary will have a 'status' key which can be one
+                of the following:
+
+                    * 'ok': The user was successfully joined to the room(s).
+                    * 'server error': An internal server error occurred while
+                        attempting to join the room(s).
+                    * 'authorisation error': The user is not authorized to join the
+                        room(s).
+        """
         print("\n=== SocketIO join_room called ===")
         user_id = get_jwt_identity()
         room_ids = data.get('rooms', [])
@@ -70,6 +97,28 @@ def register_socket_handlers(socketio):
     @socketio.on('send_message')
     @jwt_required()
     def handle_send_message(data):
+        """
+        Handle the 'send_message' event from the client.
+
+        Parameters:
+            data (dict): A JSON-serializable dictionary containing the message
+                data. The dictionary should have the following keys:
+
+                    * 'room': The ID of the room to which the message should be
+                        sent.
+                    * 'message': The content of the message.
+
+        Returns:
+            dict: A JSON-serializable dictionary with the status of the message
+                send operation. The dictionary will have a 'status' key which can
+                be one of the following:
+
+                    * 'ok': The message was successfully sent.
+                    * 'server error': An internal server error occurred while
+                        attempting to send the message.
+                    * 'authorisation error': The user is not authorized to send
+                        messages to the room.
+        """
         try:
             user_id = get_jwt_identity()
             room_id = data['room']  # Zmiana z 'room_id' na 'room'
