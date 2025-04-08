@@ -24,11 +24,17 @@ def create_app():
     from app.routes.auth import auth_bp
     from app.routes.user import user_bp
     from app.routes.chat import chat_bp
+    from .routes.dashboard import dashboard_bp
+    from .routes.aside import aside_bp
+    from .routes.group import group_bp
     
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp, url_prefix='/user')
     app.register_blueprint(chat_bp, url_prefix='/api')
+    app.register_blueprint(dashboard_bp)
+    app.register_blueprint(aside_bp)
+    app.register_blueprint(group_bp)
     
     # Register socket handlers
     from app.sockets import register_socket_handlers

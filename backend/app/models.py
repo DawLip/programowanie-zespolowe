@@ -22,6 +22,7 @@ class Friends(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     friend_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.Enum('pending', 'accepted', 'declined'), default='pending')
     
 # Model użytkownika
 class Users(db.Model):
@@ -35,6 +36,7 @@ class Users(db.Model):
     instagram = db.Column(db.String(50), nullable=True)
     linkedin = db.Column(db.String(50), nullable=True)
     password = db.Column(db.String(128), nullable=False)                        #in register
+    is_active = db.Column(db.Boolean, default=True)
 
     # Propozycja dodania daty utworzenia i aktualizacji
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
