@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models import Users, db
+from app.models import Users, Friends, db
 from sqlalchemy import or_, and_
 
 user_bp = Blueprint('user', __name__)
@@ -12,10 +12,21 @@ def get_user_by_id(user_id):
     if not user:
         return jsonify({"status": "error"}), 404
 
-    # Serializacja znajomych
-    friends = [{
-        "id": f.id
-    } for f in user.friends] if hasattr(user, 'friends') else []
+    # Pobierz znajomych w obie strony (relacja mutual)
+    friends_query = db.session.query(Friends).filter(
+        (Friends.user_id == user_id) | (Friends.friend_id == user_id)
+    )
+
+    friends_ids = []
+    for friendship in friends_query.all():
+        if friendship.user_id == user_id:
+            friends_ids.append(friendship.friend_id)
+        else:
+            friends_ids.append(friendship.user_id)
+
+    friends_ids = list(set(friends_ids))
+    if user_id in friends_ids:
+        friends_ids.remove(user_id)
 
     return jsonify({
         "id": user.id,
@@ -30,7 +41,7 @@ def get_user_by_id(user_id):
         "linkedin": user.linkedin,
         "created_at": user.created_at.isoformat() if user.created_at else None,
         "updated_at": user.updated_at.isoformat() if user.updated_at else None,
-        "friends": friends
+        "friends": friends_ids
     }), 200
 
 @user_bp.route('/<int:user_id>', methods=['POST'])

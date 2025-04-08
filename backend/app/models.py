@@ -17,6 +17,12 @@ class Role(Enum):
     ADMIN = 'ADMIN'
     SUPERADMIN = 'SUPERADMIN'
 
+# Relacja znajomych
+class Friends(db.Model):
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    friend_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
 # Model użytkownika
 class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -34,24 +40,19 @@ class Users(db.Model):
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
 
-    # # Relacja friends
-    # friends = db.relationship(
-    #     'Users',
-    #     secondary='friends',
-    #     primaryjoin=id == Friends.__table__.c.user_id,
-    #     secondaryjoin=id == Friends.__table__.c.friend_id,
-    #     backref='friends_back'
-    # )
+    # Relacja friends
+    friends = db.relationship(
+        'Users',
+        secondary='friends',
+        primaryjoin=(id == Friends.user_id),
+        secondaryjoin=(id == Friends.friend_id),
+        backref='friends_back',
+        lazy='dynamic'
+    )
 
     def __repr__(self):
         return f'<User {self.email}>'
-
-# Relacja znajomych
-class Friends(db.Model):
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
-    friend_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
+    
 # Model pokoju
 class Room(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
