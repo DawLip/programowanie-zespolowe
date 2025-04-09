@@ -30,6 +30,10 @@
             transition: all 0.2s;
             border: 1px solid #dee2e6;
         }
+        .room-card.active {
+            background: #e7f5ff;
+            border-color: #74c0fc;
+        }
         .room-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
@@ -96,6 +100,17 @@
             color: #dc3545;
             margin-top: 10px;
         }
+        .system-message {
+            color: #6c757d;
+            font-style: italic;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .typing-indicator {
+            color: #6c757d;
+            font-style: italic;
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
@@ -118,6 +133,7 @@
             </div>
             
             <div id="messages-container"></div>
+            <div id="typing-indicator" class="typing-indicator" style="display:none;"></div>
             
             <div>
                 <input type="text" id="message-input" placeholder="Type your message">
@@ -131,6 +147,8 @@
         let socket;
         let currentRoom = null;
         let currentUser = null;
+        let userRooms = [];
+        let typingTimeout;
 
         // Initialize the application
         function init() {
@@ -142,8 +160,21 @@
         function setupEventListeners() {
             document.getElementById('login-btn').addEventListener('click', handleLogin);
             document.getElementById('send-message-btn').addEventListener('click', sendMessage);
-            document.getElementById('message-input').addEventListener('keypress', (e) => {
+            
+            const messageInput = document.getElementById('message-input');
+            messageInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') sendMessage();
+            });
+            
+            // Typing indicator events
+            messageInput.addEventListener('input', () => {
+                if (currentRoom) {
+                    socket.emit('typing', { room: currentRoom });
+                    clearTimeout(typingTimeout);
+                    typingTimeout = setTimeout(() => {
+                        socket.emit('stop_typing', { room: currentRoom });
+                    }, 2000);
+                }
             });
         }
 
@@ -175,7 +206,7 @@
                 
                 if (data.access_token) {
                     localStorage.setItem('jwtToken', data.access_token);
-                    currentUser = data.user_id;  // Assuming backend returns user_id
+                    currentUser = data.user_id;
                     document.getElementById('login-form').style.display = 'none';
                     document.getElementById('chat-section').style.display = 'block';
                     connectSocket(data.access_token);
@@ -202,25 +233,62 @@
                 console.log('Connected to Socket.IO server');
             });
 
-            socket.on('room_joined', (data) => {
-                currentRoom = data.room_id;
-                document.getElementById('current-room-name').textContent = data.room_name || data.room_id;
-                document.getElementById('room-chat').style.display = 'block';
-                loadRoomMessages(data.room_id);
+            socket.on('connection_established', (data) => {
+                console.log('Connection established:', data);
             });
 
-            socket.on('new_message', (message) => {
-                addMessageToUI(message);
+            socket.on('join_room_response', (response) => {
+                console.log('Join room response:', response);
+                
+                if (response.status === 'ok') {
+                    console.log('Successfully joined rooms');
+                    updateRoomUI(userRooms.map(room => room.id));
+                } else {
+                    console.error('Failed to join rooms:', response.message);
+                    alert(`Failed to join rooms: ${response.message}`);
+                }
             });
+
+            // Update the socket.io message handler
+            socket.on('new_message', (message) => {
+                console.log('New message received:', message);
+                
+                // Check if message is for current room (handling both formats)
+                const messageRoom = message.room_id || message.room;
+                if (messageRoom === currentRoom) {
+                    addMessageToUI({
+                        name: message.name,
+                        surname: message.surname,
+                        content: message.message || message.content,
+                        timestamp: message.date || message.timestamp
+                    });
+                }
+});
 
             socket.on('user_joined', (data) => {
-                addSystemMessage(`${data.username} joined the room`);
-                updateOnlineUsers(data.users);
+                if (data.room_id === currentRoom) {
+                    addSystemMessage(`${data.username} joined the room`);
+                    updateOnlineUsers(data.users);
+                }
             });
 
             socket.on('user_left', (data) => {
-                addSystemMessage(`${data.username} left the room`);
-                updateOnlineUsers(data.users);
+                if (data.room_id === currentRoom) {
+                    addSystemMessage(`${data.username} left the room`);
+                    updateOnlineUsers(data.users);
+                }
+            });
+
+            socket.on('typing', (data) => {
+                if (data.room === currentRoom && data.userId !== currentUser) {
+                    showTypingIndicator(data.username);
+                }
+            });
+
+            socket.on('stop_typing', (data) => {
+                if (data.room === currentRoom) {
+                    hideTypingIndicator();
+                }
             });
 
             socket.on('error', (error) => {
@@ -229,7 +297,7 @@
             });
         }
 
-        // Load user's rooms
+        // Load user's rooms and automatically join them
         async function loadRooms() {
             try {
                 const token = localStorage.getItem('jwtToken');
@@ -239,32 +307,78 @@
                 
                 const data = await response.json();
                 
-                if (data.rooms) {
-                    const roomsList = document.getElementById('rooms-list');
-                    roomsList.innerHTML = data.rooms.map(room => `
-                        <div class="room-card" onclick="joinRoom(${room.id}, '${room.name}')">
-                            <h4>${room.name}</h4>
-                            <p>ID: ${room.id}</p>
-                        </div>
-                    `).join('');
+                if (data.rooms && Array.isArray(data.rooms)) {
+                    userRooms = data.rooms;
+                    renderRoomsList();
+                    
+                    // Automatically join all rooms after loading them
+                    const roomIds = data.rooms.map(room => room.id);
+                    joinRooms(roomIds);
                 }
             } catch (error) {
                 console.error('Error loading rooms:', error);
             }
         }
 
-        // Join a room
-        function joinRoom(roomId, roomName) {
-            console.log('--JS--Joining room:', roomId);
+        // Render rooms list
+        function renderRoomsList() {
+            const roomsList = document.getElementById('rooms-list');
+            roomsList.innerHTML = userRooms.map(room => `
+                <div class="room-card" data-room-id="${room.id}" onclick="selectRoom(${room.id})">
+                    <h4>${room.name}</h4>
+                    <p>ID: ${room.id}</p>
+                </div>
+            `).join('');
+        }
+
+        // Join rooms
+        function joinRooms(roomIds) {
+            console.log('Joining rooms:', roomIds);
             if (socket && socket.connected) {
                 socket.emit('join_room', { 
-                    room_id: roomId,
-                    room_name: roomName 
+                    rooms: Array.isArray(roomIds) ? roomIds : [roomIds]
                 });
             } else {
                 console.error('Not connected to Socket.IO server');
                 alert('Not connected to server');
             }
+        }
+
+        // Update UI based on requested rooms
+        function updateRoomUI(requestedRoomIds) {
+            // Mark all requested rooms as "joined" in UI
+            document.querySelectorAll('.room-card').forEach(card => {
+                const cardRoomId = parseInt(card.dataset.roomId);
+                if (requestedRoomIds.includes(cardRoomId)) {
+                    card.classList.add('active');
+                }
+            });
+            
+            // If no room is currently selected, select the first one
+            if (!currentRoom && requestedRoomIds.length > 0) {
+                selectRoom(requestedRoomIds[0]);
+            }
+        }
+
+        // Select a room to view its chat
+        async function selectRoom(roomId) {
+            const room = userRooms.find(r => r.id === roomId);
+            if (!room) return;
+
+            // Update UI
+            document.querySelectorAll('.room-card').forEach(card => {
+                card.classList.remove('active');
+                if (card.dataset.roomId === roomId.toString()) {
+                    card.classList.add('active');
+                }
+            });
+
+            currentRoom = roomId;
+            document.getElementById('current-room-name').textContent = room.name;
+            document.getElementById('room-chat').style.display = 'block';
+            
+            await loadRoomMessages(roomId);
+            document.getElementById('message-input').focus();
         }
 
         // Load room messages
@@ -280,7 +394,12 @@
                 container.innerHTML = '';
                 
                 if (Array.isArray(data)) {
-                    data.forEach(msg => addMessageToUI(msg));
+                    data.forEach(msg => addMessageToUI({
+                        name: msg.name,
+                        surname: msg.surname,
+                        content: msg.content || msg.message,
+                        timestamp: msg.timestamp || msg.date
+                    }));
                     container.scrollTop = container.scrollHeight;
                 }
             } catch (error) {
@@ -295,14 +414,20 @@
             
             if (message && currentRoom && socket) {
                 socket.emit('send_message', {
-                    room_id: currentRoom,
-                    message: message
+                    room: currentRoom,  // Must match backend expectation
+                    message: message,
+                    message_type: 'TEXT'
+                }, (response) => {
+                    // Optional: handle acknowledgement
+                    if (response && response.error) {
+                        console.error('Error sending message:', response.error);
+                    }
                 });
                 input.value = '';
+                socket.emit('stop_typing', { room: currentRoom });
             }
         }
 
-        // Add message to UI
         function addMessageToUI(message) {
             const container = document.getElementById('messages-container');
             const messageDiv = document.createElement('div');
@@ -310,15 +435,27 @@
             
             messageDiv.innerHTML = `
                 <div>
-                    <span class="message-username">${message.name}</span>
-                    <span class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</span>
+                    <span class="message-username">${message.name || 'Unknown'} ${message.surname || ''}</span>
+                    <span class="message-time">${formatDate(message.timestamp)}</span>
                 </div>
-                <div class="message-content">${message.message}</div>
+                <div class="message-content">${message.content || message.message}</div>
             `;
             
             container.appendChild(messageDiv);
             container.scrollTop = container.scrollHeight;
         }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return '';
+            try {
+                const date = new Date(timestamp);
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } catch (e) {
+                console.error('Error formatting date:', e);
+                return '';
+            }
+        }
+
 
         // Add system message to UI
         function addSystemMessage(text) {
@@ -328,6 +465,19 @@
             messageDiv.textContent = text;
             container.appendChild(messageDiv);
             container.scrollTop = container.scrollHeight;
+        }
+
+        // Show typing indicator
+        function showTypingIndicator(username) {
+            const indicator = document.getElementById('typing-indicator');
+            indicator.textContent = `${username} is typing...`;
+            indicator.style.display = 'block';
+        }
+
+        // Hide typing indicator
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            indicator.style.display = 'none';
         }
 
         // Update online users list

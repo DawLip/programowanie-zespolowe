@@ -1,8 +1,6 @@
-from flask_sqlalchemy import SQLAlchemy
 from enum import Enum
 from datetime import datetime
-
-db = SQLAlchemy()
+from app import db
 
 class MessageType(Enum):
     TEXT = 'TEXT'
@@ -19,6 +17,13 @@ class Role(Enum):
     ADMIN = 'ADMIN'
     SUPERADMIN = 'SUPERADMIN'
 
+# Relacja znajomych
+class Friends(db.Model):
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    friend_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.Enum('pending', 'accepted', 'declined'), default='pending')
+    
 # Model użytkownika
 class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -31,29 +36,25 @@ class Users(db.Model):
     instagram = db.Column(db.String(50), nullable=True)
     linkedin = db.Column(db.String(50), nullable=True)
     password = db.Column(db.String(128), nullable=False)                        #in register
+    is_active = db.Column(db.Boolean, default=True)
 
     # Propozycja dodania daty utworzenia i aktualizacji
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
 
-    # # Relacja friends
-    # friends = db.relationship(
-    #     'Users',
-    #     secondary='friends',
-    #     primaryjoin=id == Friends.__table__.c.user_id,
-    #     secondaryjoin=id == Friends.__table__.c.friend_id,
-    #     backref='friends_back'
-    # )
+    # Relacja friends
+    friends = db.relationship(
+        'Users',
+        secondary='friends',
+        primaryjoin=(id == Friends.user_id),
+        secondaryjoin=(id == Friends.friend_id),
+        backref='friends_back',
+        lazy='dynamic'
+    )
 
     def __repr__(self):
         return f'<User {self.email}>'
-
-# Relacja znajomych
-class Friends(db.Model):
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
-    friend_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
+    
 # Model pokoju
 class Room(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
