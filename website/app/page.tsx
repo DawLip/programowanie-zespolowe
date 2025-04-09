@@ -27,10 +27,10 @@ export default function Home() {
               surname="Doe" 
               isActive={true} 
               buttons={
-              <>
-                <Icon src={"/icons/cross.png"} size={24} onClick={()=>{}}/>
-                <Icon src={"/icons/check.png"} size={24} onClick={()=>{}}/>
-              </>
+                <>
+                  <Icon src={"/icons/cross.png"} size={24} onClick={()=>{}}/>
+                  <Icon src={"/icons/check.png"} size={32} onClick={()=>{}}/>
+                </>
               }
             />
           </Section>
@@ -42,6 +42,7 @@ export default function Home() {
                   name={u.name} 
                   surname={u.surname} 
                   isActive={u.isActive}
+                  onClick={()=>router.push('/chat')}
                 >
                   <div className='flex-col gap-8'>
                     <Message isUserAuthor={true}>Hey, whats up?</Message>
@@ -60,6 +61,7 @@ export default function Home() {
                   name={g.name} 
                   surname="" 
                   isActive={g.isActive}
+                  onClick={()=>router.push('/chat')}
                 >
                   <div className='flex-col gap-8'>
                     <Message isUserAuthor={true}>Hey, whats up?</Message>
@@ -76,7 +78,8 @@ export default function Home() {
                   name="John" 
                   surname="Doe" 
                   isActive={true} 
-                  buttons={<Icon src="/icons/add-friend.png" size={32} onClick={()=>{}}/>}
+                  buttons={<Icon src="/icons/add-friend.png" size={24} onClick={()=>{}}/>}
+                  onClick={()=>router.push('/profile/t')}
                 />)}
               </div>
           </Section>

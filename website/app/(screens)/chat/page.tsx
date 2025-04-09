@@ -25,7 +25,7 @@ export default function ChatPage() {
     <main className='max-h-screen'>
       <Aside users={users} groups={groups} />
       <div className='flex-col grow pb-32'>
-        <Header header={"Frank Drey"} name={"Adam"} surname={"Freineg"} backArrow />
+        <Header header={"Frank Drey"} name={"Adam"} surname={"Freineg"} backArrow userProfileSrc=' '/>
         <main className='gap-32 px-32'>
           <section className='flex-1 flex-col gap-16'>
             <div 
@@ -66,9 +66,9 @@ export default function ChatPage() {
                 John Brown
               </span>
               <div className='gap-16'>
-                <Icon src={""} size={48} onClick={()=>{}}/>
-                <Icon src={""} size={48} onClick={()=>{}}/>
-                <Icon src={""} size={48} onClick={()=>{}}/>
+                <Icon src={"/icons/facebook.png"} size={48} onClick={()=>{}}/>
+                <Icon src={"/icons/instagram.png"} size={48} onClick={()=>{}}/>
+                <Icon src={"/icons/linkedin.png"} size={48} onClick={()=>{}}/>
               </div>
             </div>
             <div className='flex-col gap-16'>

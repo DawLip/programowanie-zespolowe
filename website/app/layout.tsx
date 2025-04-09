@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 const roboto = Inter({
-  weight: ['400', '600','700'],
+  weight: ['200', '300','400', '600','700'],
   style: ['normal'],
   subsets: ['latin'],
 })

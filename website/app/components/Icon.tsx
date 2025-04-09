@@ -4,6 +4,7 @@ const Icon = ({src, size, onClick}:{src?: string, size: number, onClick: ()=>voi
   <img 
     src={src==""?"/placeholder.png":src} 
     style={{height:size, width: size}} 
+    className="hover:cursor-pointer"
     onClick={onClick}
   />
 )
