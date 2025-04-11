@@ -5,6 +5,8 @@
     AttributeError: type object 'Room' has no attribute 'user1_id'
 
 /aside
+- zwracając użytkowników dodać id user
+- zwracając grupy dodać id grupy
 - nie zgadza się z modelem i bazą danych
     File "/home/david/workspace/studies/account_manager/backend/app/routes/dashboard.py", line 51, in get_dashboard
     'messageAuthor': msg.user.name,
