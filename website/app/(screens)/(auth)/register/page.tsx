@@ -3,12 +3,12 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie';
 
-import TextInput from "../../components/TextInput";
-import Button from "../../components/Button";
-import UserCard from "../../components/UserCard";
-import Message from "../../components/Message";
+import TextInput from "../../../components/TextInput";
+import Button from "../../../components/Button";
+import UserCard from "../../../components/UserCard";
+import Message from "../../../components/Message";
 
-import config from "../../config"
+import config from "../../../config"
 
 export default function LoginScreen() {
   const router = useRouter();

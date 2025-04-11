@@ -1,26 +1,44 @@
 "use client"
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie';
+import config from '../config';
 
 import { Divider, Icon, ProfileImage } from './';
 
 import c from '../colors';
+import { use } from 'react';
 
 const Header =(
-  {header, name, surname, backArrow, userProfileSrc}: 
+  {header, backArrow, userProfileSrc}: 
   {
     header: any, 
-    name: string,
-    surname: string,
     backArrow?: boolean,
     userProfileSrc?: string
   }) => {
   const router = useRouter();
 
+  const [name, setName] = useState("");
+  const [surname, setSurname] = useState("");
+
+
   const logout = () => {
     Cookies.remove('token');
     router.push('/login');
   }
+
+  const userID = Cookies.get('userId')
+  useEffect(() => {
+    fetch(`${config.api}/user/${userID}`, {
+      headers: {"Authorization": `Bearer ${Cookies.get('token')}`}
+    })
+      .then(response => response.json())
+      .then((response:any) => {
+        setName(response.name || "");
+        setSurname(response.surname || "");
+      })
+      .catch(error => console.error('Błąd:', error));
+  },[])
   
   return (
     <header className='justify-between px-32 h-96'>

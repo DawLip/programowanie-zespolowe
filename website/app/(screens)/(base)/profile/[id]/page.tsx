@@ -10,15 +10,15 @@ import {Header, Aside, Icon, Section, UserCard, Message, ProfileImage } from '..
 export default function Settings({params}: {params: {id: string}}) {
   const router = useRouter();
 
-  const [name, setName] = useState("Adam");
-  const [surname, setSurname] = useState("Freineg");
-  const [about, setAbout] = useState("Za Twoją zgodą, my i nasi partnerzy (881) używamy plików cookie lub podobnych technologii do przechowywania i przetwarzania danych osobowych oraz uzyskiwania dostępu do tych danych, takich jak informacje o Twojej wizycie na tej stronie internetowej, adresy IP i identyfikatory plików cookie. Niektórzy partnerzy nie proszą o zgodę");
-  const [email, setEmail] = useState("+48 505 575 832");
-  const [phone, setPhone] = useState("Katowice, Krakowska 73a");
-  const [address, setAddress] = useState("fdsafdsfdg fd ");
-  const [facebookURL, setFacebookURL] = useState("gfdsgdfsgdfs");
-  const [instagramURL, setInstagramURL] = useState("gfdsgsdfgdfs");
-  const [linkedinURL, setLinkedinURL] = useState("gfdsgfdsg");
+  const [name, setName] = useState("");
+  const [surname, setSurname] = useState("");
+  const [about, setAbout] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [facebookURL, setFacebookURL] = useState("");
+  const [instagramURL, setInstagramURL] = useState("");
+  const [linkedinURL, setLinkedinURL] = useState("");
 
   useEffect(() => {
     fetch(`${config.api}/user/${params.id}`, {
@@ -41,7 +41,7 @@ export default function Settings({params}: {params: {id: string}}) {
   
   return (
     <>
-      <Header header={"Profile"} name={"Adam"} surname={"Freineg"} backArrow />
+      <Header header={"Profile"} backArrow />
       <main className='grow px-32'>
         <div className='flex-col grow gap-32 p-32 rounded-[32px] surface'>
           <div className='gap-16 items-center'>

@@ -10,7 +10,7 @@ export default function GroupSettings() {
 
   return (
     <>
-      <Header header={"Python lovers group"} name={"Adam"} surname={"Freineg"} backArrow/>
+      <Header header={"Python lovers group"} backArrow/>
       <main className='gap-32 px-32 pb-32'>
         <section className='flex-col grow gap-32 p-32 rounded-[32] surface'>
           <div>Python Lovers Group</div>

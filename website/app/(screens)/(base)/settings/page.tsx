@@ -69,7 +69,7 @@ export default function Settings() {
   
   return (
     <>
-    <Header header={"Profile"} name={"Adam"} surname={"Freineg"} backArrow />
+    <Header header={"Profile"} backArrow />
     <main className='grow px-32'>
       <div className='flex-col grow gap-32 p-32 rounded-[32px] surface'>
         <div className='gap-16 items-center'>

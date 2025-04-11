@@ -27,7 +27,7 @@ export default function ChatPage({params}: {params: {id: string}}) {
    },[] )
   return (
     <>
-      <Header header={"Frank Drey"} name={"Adam"} surname={"Freineg"} backArrow userProfileSrc=' '/>
+      <Header header={"Frank Drey"} backArrow userProfileSrc=' '/>
       <main className='gap-32 px-32'>
         <section className='flex-1 flex-col gap-16'>
           <div 

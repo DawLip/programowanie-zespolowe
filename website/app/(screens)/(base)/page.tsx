@@ -32,7 +32,7 @@ export default function Home() {
   
   return (
     <>
-      <Header header={"Welcome Adam"} name={"Adam"} surname={"Freineg"} />
+      <Header header={"Welcome Adam"}/>
       <main className='flex-col grow gap-32 px-32'>
         <Section header="Invitations">
           <UserCard 
