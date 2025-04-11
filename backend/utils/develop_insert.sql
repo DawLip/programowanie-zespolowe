@@ -6,10 +6,10 @@ VALUES
     ('basic@user', 'Basic', 'User', 'user123', datetime('now'), datetime('now'));
 
 -- Create rooms
-INSERT INTO room (type, name, created_at)
+INSERT INTO room (type, name, created_at, description)
 VALUES 
-    ('GROUP', 'General Chat', datetime('now')),
-    ('GROUP', 'Private Room', datetime('now'));
+    ('GROUP', 'General Chat', datetime('now'), 'Test chat for users 1'),
+    ('GROUP', 'Private Room', datetime('now'), 'Test chat for users 2');
 
 -- Add users to rooms
 INSERT INTO room_users (room_id, user_id, role, joined_at)

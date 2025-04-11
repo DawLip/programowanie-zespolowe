@@ -3,3 +3,4 @@ Flask-SQLAlchemy
 Flask-JWT-Extended
 bcrypt
 Flask-SocketIO
+Flask-Cors

@@ -1,6 +1,7 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models import Users, Room, Room_Users
+from app.models import Users, Room, Room_Users, RoomType, db
+from datetime import datetime
 
 group_bp = Blueprint('group', __name__)
 
@@ -25,3 +26,27 @@ def get_group(group_id):
             'role': Room_Users.query.filter_by(room_id=group_id, user_id=m.id).first().role.value
         } for m in members]
     })
+
+
+@group_bp.route('/group/new', methods=['POST'])
+@jwt_required()
+def create_group():
+    data = request.get_json()
+    #create group
+    new_group = Room(
+        type=RoomType.GROUP,
+        name=data['name'],
+        description=data['description'],
+        created_at=datetime.utcnow()
+    )
+    db.session.add(new_group)
+    db.session.commit()
+
+    #Add self as admin
+
+    #Add members
+
+    #Get group id
+    group_id = new_group.id
+
+    return jsonify({"Group id": group_id,"status": "ok"}), 200
