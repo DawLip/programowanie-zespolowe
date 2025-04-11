@@ -10,36 +10,37 @@ import Message from "../../components/Message";
 
 import config from "../../config"
 
-
-
 export default function LoginScreen() {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [surname, setSurname] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordR, setPasswordR] = useState("");
 
-  const onLoginClick = () => {
-    fetch(`http://localhost:3001/auth/login`, {
+  useEffect(()=>{
+    const token = Cookies.get('token');
+    if (token) { router.push('/'); }
+  },[])
+
+  const onRegisterClick = () => {
+    fetch(`${config.api}/auth/register`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({email, password}), 
+      body: JSON.stringify({email, name, surname, password}), 
     })
       .then(response => response.json())
-      .then(({access_token}:{access_token: string}) => {
-        if (access_token) {
-          Cookies.set('token', access_token);
+      .then((response:any) => {
+        console.log(response)
+        if (response.access_token) {
+          Cookies.set('token', response.access_token);
+          Cookies.set('userId', response.userId);
           router.push('/');
         }
       })
       .catch(error => console.error('Błąd:', error));
   }
-
-  useEffect(()=>{
-    const token = Cookies.get('token');
-    if (token) {
-      router.push('/');
-    }
-  },[])
 
   return (
     <main className="min-h-screen bgc">
@@ -74,35 +75,49 @@ export default function LoginScreen() {
      <section className="flex-1 flex-col min-h-screen pb-64 pt-16 justify-between on_surface_gray">
       <div className='justify-center text-[84px] font-bold on_bgc_primary'>ChatNow</div>
       <div className='flex-col gap-32'>
-        <div className='justify-center text-[64px] font-bold on_surface_gray'>Login</div>
+        <div className='justify-center text-[64px] font-bold on_surface_gray'>Register</div>
         <section className='flex-col gap-16 px-192'>
           <div className='flex-col gap-8'>
-            <TextInput 
-              value={email} 
-              setValue={setEmail} 
-              label="Email" 
-              placeholder="excample@gmail.com"
-            />
-            <TextInput 
-              value={password} 
-              setValue={setPassword} 
-              label="Password" 
-              password
-            />
+          <TextInput 
+            value={email} 
+            setValue={setEmail} 
+            label="Email" 
+            placeholder="excample@gmail.com"
+          />
+          <TextInput 
+            value={name} 
+            setValue={setName} 
+            label="Name" 
+            placeholder="Joe"
+          />
+          <TextInput 
+            value={surname} 
+            setValue={setSurname} 
+            label="Surname" 
+            placeholder="Doe"
+          />
+          <TextInput 
+            value={password} 
+            setValue={setPassword} 
+            label="Password" 
+            password
+          />
+          <TextInput 
+            value={passwordR} 
+            setValue={setPasswordR} 
+            label="Retry password" 
+            password
+          />
           </div>
           <div className='flex-col gap-8'>
-            <Button label="Login" onClick={onLoginClick} type="filled"/>
-            <div className='gap-8 justify-center'>
-              <span className='on_surface_gray'>Do you forgot password?</span> 
-              <a href="/reset-password"><span className='font-bold on_bgc_primary'>Reset password</span></a>
-            </div>
+            <Button label="Register" onClick={onRegisterClick} type="filled"/>
           </div>
         </section>
       </div>
       
     <section className='flex-col on_surface_gray px-192'>
-      <div className='justify-center'>Don't have an account yet?</div>
-      <Button label="Register" onClick={()=>router.push('/register')} type="outlined"/>
+      <div className='justify-center'>Already have an account?</div>
+      <Button label="Login" onClick={()=>router.push('/login')} type="outlined"/>
     </section>
 
      </section>

@@ -33,7 +33,7 @@ def register():
     # Tworzenie tokenu JWT
     access_token = create_access_token(identity=new_user.id)
 
-    return jsonify({"status": "success", "access_token": access_token}), 200
+    return jsonify({"status": "success", "access_token": access_token, "userId":new_user.id}), 200
 
 @auth_bp.route('/auth/login', methods=['POST'])
 def login():
@@ -59,6 +59,7 @@ def login():
         return jsonify({
             "status": "success",
             "access_token": access_token,
+            "userId":user.id
             # "user_id": user.id  # For debugging
         }), 200
     else:

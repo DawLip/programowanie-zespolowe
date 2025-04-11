@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_socketio import SocketIO
+from flask_cors import CORS
 
 # Initialize extensions without app first (important!)
 db = SQLAlchemy()
@@ -10,6 +11,7 @@ socketio = SocketIO()
 
 def create_app():
     app = Flask(__name__, template_folder='../templates')
+    CORS(app)
     
     # Load configuration
     app.config.from_object('app.config.Config')
