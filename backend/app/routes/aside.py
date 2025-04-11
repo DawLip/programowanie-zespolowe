@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models import Users, Messages, Room, Room_Users
-from sqlalchemy import desc
+from app.models import Users, Messages, Room, Room_Users, RoomType, Friends
+from sqlalchemy import desc, func
 
 aside_bp = Blueprint('aside', __name__)
 
@@ -9,42 +9,53 @@ aside_bp = Blueprint('aside', __name__)
 @jwt_required()
 def get_aside():
     user_id = get_jwt_identity()
-    
-    #Znajomi z ostatnią wiadomością
+    current_user = Users.query.get(user_id)
     friends = []
-    for friend in Users.query.get(user_id).friends:
-        room = Room.query.filter(
-            ((Room.user1_id == user_id) & (Room.user2_id == friend.id)) |
-            ((Room.user1_id == friend.id) & (Room.user2_id == user_id))
-        ).first()
+
+    #Pobierz wszystkich znajomych (relacja mutual)
+    friendships = Friends.query.filter(
+        (Friends.user_id == user_id) | (Friends.friend_id == user_id)
+    ).filter(Friends.status == 'accepted').all()
+    
+    for friendship in friendships:
+        friend_id = friendship.friend_id if friendship.user_id == user_id else friendship.user_id
+        friend = Users.query.get(friend_id)
         
-        last_msg = Messages.query.filter_by(room_id=room.id)\
-            .order_by(desc(Messages.timestamp)).first() if room else None
+        #Znajdź pokój czatu przez Room_Users
+        room = Room.query.join(Room_Users, (Room.id == Room_Users.room_id))\
+            .filter(
+                Room_Users.user_id.in_([user_id, friend_id]),
+                Room.type == RoomType.PRIVATE
+            )\
+            .group_by(Room.id)\
+            .having(func.count(Room_Users.user_id) == 2)\
+            .first()
+
+        last_msg = Messages.query.filter_by(room_id=room.id).order_by(desc(Messages.timestamp)).first() if room else None
         
         friends.append({
-            'name': friend.name,
-            'surname': friend.surname,
-            'lastMessage': last_msg.content if last_msg else '',
-            'lastMessageAuthor': last_msg.user.name if last_msg else '',
-            'isActive': friend.is_active
+            "id": friend.id,
+            "name": friend.name,
+            "surname": friend.surname,
+            "lastMessage": last_msg.content if last_msg else "",
+            "lastMessageAuthor": Users.query.get(last_msg.user_id).name if last_msg else "",
+            "isActive": friend.is_active
         })
 
-    #Grupy z ostatnią wiadomością
+    #Grupy
     groups = []
-    for room in Room.query.filter_by(type='GROUP').join(Room_Users)\
-        .filter(Room_Users.user_id == user_id).all():
+    group_rooms = Room.query.filter_by(type=RoomType.GROUP).join(Room_Users)\
+        .filter(Room_Users.user_id == user_id).all()
         
-        last_msg = Messages.query.filter_by(room_id=room.id)\
-            .order_by(desc(Messages.timestamp)).first()
-            
+    for room in group_rooms:
+        last_msg = Messages.query.filter_by(room_id=room.id).order_by(desc(Messages.timestamp)).first()
+        
         groups.append({
-            'name': room.name,
-            'lastMessage': last_msg.content if last_msg else '',
-            'lastMessageAuthor': last_msg.user.name if last_msg else '',
-            'isActive': True
+            "id": room.id,
+            "name": room.name,
+            "lastMessage": last_msg.content if last_msg else "",
+            "lastMessageAuthor": Users.query.get(last_msg.user_id).name if last_msg else "",
+            "isActive": True
         })
 
-    return jsonify({
-        'friends': friends,
-        'groups': groups
-    })
+    return jsonify({"friends": friends, "groups": groups})
