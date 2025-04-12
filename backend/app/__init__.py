@@ -7,7 +7,7 @@ from flask_cors import CORS
 # Initialize extensions without app first (important!)
 db = SQLAlchemy()
 jwt = JWTManager()
-socketio = SocketIO()
+socketio = SocketIO(cors_allowed_origins="*", async_mode="eventlet")
 
 def create_app():
     app = Flask(__name__, template_folder='../templates')
@@ -19,6 +19,7 @@ def create_app():
     # Initialize extensions with app
     db.init_app(app)
     jwt.init_app(app)
+    
     socketio.init_app(app)
     
     # Register blueprints
