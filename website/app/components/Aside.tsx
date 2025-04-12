@@ -26,7 +26,9 @@ export default function Aside({ users, groups }:{users: any, groups: any}) {
           style={{height: "calc(100vh - 124px - 16px)"}}
         >
           {!friendsOrGroups && <Button label="Create" onClick={()=>router.push("/group-settings")} type="outlined2" />}
-          {users.map((u:any) => <UserCard user={u} onClick={()=>router.push("/chat")}/>)}
+
+          {friendsOrGroups && users && users.map((u:any) => <UserCard user={u} onClick={()=>router.push(`/chat/private/${u.roomId}`)}/>)}
+          {!friendsOrGroups && groups && groups.map((g:any) => <UserCard user={g} onClick={()=>router.push(`/chat/group/${g.roomId}`)}/>)}
         </div>
       </section>
     </aside>
@@ -41,7 +43,7 @@ const UserCard = ({user, onClick}:{user: any, onClick?: () => void}) => (
         {user.name} {user.surname}
       </div>
       <div className="on_nav">
-        {user.lastMessageAuthor} {user.lastMessage}
+        {user.lastMessageAuthor}: {user.lastMessage}
       </div>
     </div>
   </div>

@@ -14,21 +14,24 @@ export default function Layout({children}: {children: React.ReactNode}) {
   
   const u = { id: 0, name: 'John', surname:'Doe', lastMessage: "hey!", lastMessageAuthor:"you", isActive: true }
   const g = { id: 0, name: "Python lovers", lastMessage: "hey!", lastMessageAuthor:"you", isActive: true }
-  const users = [u,u,u];
-  const groups = [g,g,g];
+  const [users, setUsers] = useState<any[]>([]);
+  const [groups, setGroups] = useState<any[]>([]);
 
 
   useEffect(() => { if(!Cookies.get('token')) router.push('/login') },[] )
     
   useEffect(() => {
+    fetch(`${config.api}/aside`, {
+      headers: {"Authorization": `Bearer ${Cookies.get('token')}`}
+    })
+      .then(response => response.json())
+      .then((response:any) => {
+        console.log("response", response)
 
-    // fetch(`${config.api}/user/${userID}`, {
-    //   headers: {"Authorization": `Bearer ${Cookies.get('token')}`}
-    // })
-    //   .then(response => response.json())
-    //   .then((response:any) => {
-    //   })
-    //   .catch(error => console.error('Błąd:', error));
+        setUsers(response.friends);
+        setGroups(response.groups)
+      })
+      .catch(error => console.error('Błąd:', error));
   }, [])
 
   

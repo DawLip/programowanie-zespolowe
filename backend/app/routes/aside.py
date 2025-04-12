@@ -35,6 +35,7 @@ def get_aside():
         
         friends.append({
             "id": friend.id,
+            "roomId": room.id,
             "name": friend.name,
             "surname": friend.surname,
             "lastMessage": last_msg.content if last_msg else "",
@@ -51,7 +52,7 @@ def get_aside():
         last_msg = Messages.query.filter_by(room_id=room.id).order_by(desc(Messages.timestamp)).first()
         
         groups.append({
-            "id": room.id,
+            "roomId": room.id,
             "name": room.name,
             "lastMessage": last_msg.content if last_msg else "",
             "lastMessageAuthor": Users.query.get(last_msg.user_id).name if last_msg else "",

@@ -70,7 +70,7 @@ def get_dashboard():
 
     #Sugerowani znajomi
     may_know = Users.query.filter(
-        ~Users.friends.any(user_id=user_id),
+        ~Users.friends.any(id=user_id),
         Users.id != user_id
     ).limit(5).all()
 

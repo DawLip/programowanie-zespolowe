@@ -19,7 +19,7 @@ def get_my_rooms():
         
         return jsonify({
             "status": "success",
-            "rooms": [{"id": r.id, "name": r.name} for r in rooms]
+            "rooms": [{"id": r.id, "name": r.name, "type": r.type} for r in rooms]
         })
     except Exception as e:
         print("ERROR in my-rooms:", str(e))

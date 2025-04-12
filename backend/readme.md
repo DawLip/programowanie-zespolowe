@@ -21,3 +21,7 @@
 - nowy endpoint do tworzenia grupy
 zwraca
 { groupId, status }
+
+
+(POST) /user/addfriend
+{ id } => { status }
