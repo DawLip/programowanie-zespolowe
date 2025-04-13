@@ -3,11 +3,14 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import Users, Friends, db
 from sqlalchemy import or_, and_
 from flask_cors import cross_origin
+from app.models import Room, Room_Users, Messages, Users, db, RoomType, Role
+from datetime import datetime
+
 
 user_bp = Blueprint('user', __name__)
 
 @user_bp.route('/<int:user_id>', methods=['GET'])
-# @jwt_required()
+@jwt_required()
 def get_user_by_id(user_id):
     print("tesfdsagfdgdfdgsfsdgfdgsf")
     user = Users.query.get(user_id)
@@ -112,3 +115,97 @@ def search_users():
             "status": "error",
             "message": str(e)
         }), 500
+        
+@user_bp.route('/invite/<int:user_id>', methods=['POST'])
+@jwt_required()
+def inviteUser(user_id):
+    current_user_id = get_jwt_identity()
+    if current_user_id == user_id:
+        return jsonify({"status": "error", "message": "Cannot invite yourself"}), 400
+
+    # Sprawdź, czy zaproszenie już istnieje
+    existing_invite = Friends.query.filter(
+        or_(
+            and_(Friends.user_id == current_user_id, Friends.friend_id == user_id),
+            and_(Friends.user_id == user_id, Friends.friend_id == current_user_id)
+        )
+    ).first()
+
+    if existing_invite:
+        return jsonify({"status": "error", "message": "Invitation already exists"}), 400
+
+    # Dodaj zaproszenie
+    new_invite = Friends(user_id=current_user_id, friend_id=user_id)
+    db.session.add(new_invite)
+    db.session.commit()
+
+    return jsonify({"status": "ok", "message": "Invitation sent"}), 200
+
+@user_bp.route('/invitation-accept/<int:user_id>', methods=['POST'])
+@jwt_required()
+def accept_invite(user_id):
+    current_user_id = get_jwt_identity()
+
+    # Sprawdź, czy zaproszenie istnieje
+    existing_invite = Friends.query.filter(
+        or_(
+            and_(Friends.user_id == current_user_id, Friends.friend_id == user_id),
+            and_(Friends.user_id == user_id, Friends.friend_id == current_user_id)
+        )
+    ).first()
+
+    if not existing_invite:
+        return jsonify({"status": "error", "message": "No invitation found"}), 400
+
+    # Usuń zaproszenie
+    db.session.delete(existing_invite)
+
+    # Dodaj znajomego
+    new_friend = Friends(user_id=current_user_id, friend_id=user_id, status='accepted')
+    db.session.add(new_friend)
+    db.session.commit()
+    
+    new_room = Room(
+        type=RoomType.PRIVATE,
+        name="PRIVATE",
+        created_at=datetime.utcnow()
+    )
+    db.session.add(new_room)
+    db.session.flush()
+    
+    db.session.add(Room_Users(
+        room_id=new_room.id,
+        user_id=current_user_id,
+        role=Role.USER
+    ))
+    
+    db.session.add(Room_Users(
+        room_id=new_room.id,
+        user_id=user_id,
+        role=Role.USER
+    ))
+    db.session.commit()
+
+    return jsonify({"status": "ok", "message": "Invitation accepted"}), 200
+
+@user_bp.route('/invitation-decline/<int:user_id>', methods=['POST'])
+@jwt_required()
+def decline_invite(user_id):
+    current_user_id = get_jwt_identity()
+
+    # Sprawdź, czy zaproszenie istnieje
+    existing_invite = Friends.query.filter(
+        or_(
+            and_(Friends.user_id == current_user_id, Friends.friend_id == user_id),
+            and_(Friends.user_id == user_id, Friends.friend_id == current_user_id)
+        )
+    ).first()
+
+    if not existing_invite:
+        return jsonify({"status": "error", "message": "No invitation found"}), 400
+
+    # Usuń zaproszenie
+    db.session.delete(existing_invite)
+    db.session.commit()
+
+    return jsonify({"status": "ok", "message": "Invitation declined"}), 200

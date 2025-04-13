@@ -1,10 +1,10 @@
 import { ProfileImage } from './';
 
 const Message = ({ isUserAuthor, src, children, name, isFirst, isLast }:{
-  isFirst: Boolean,
-  isLast: Boolean,
+  isFirst?: Boolean,
+  isLast?: Boolean,
   name?: string
-  isUserAuthor: Boolean,
+  isUserAuthor?: Boolean,
   src?: string,
   children: any
 }) => (

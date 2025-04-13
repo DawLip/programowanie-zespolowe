@@ -14,9 +14,12 @@ export default function Layout({children}: {children: any}) {
   const userID = Cookies.get('userId')
   const [users, setUsers] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
-  const { socket, isConnected } = useSocket();
+  const [isLogined, setIsLogined] = useState(false);
 
-  useEffect(() => { if(!Cookies.get('token')) router.push('/login') },[] )
+  useEffect(() => { 
+    if(!Cookies.get('token'))  router.push('/login')
+    else setIsLogined(true);
+  },[] )
     
   useEffect(() => {
     fetch(`${config.api}/aside`, {
@@ -31,6 +34,8 @@ export default function Layout({children}: {children: any}) {
       })
       .catch(error => console.error('Błąd:', error));
   }, [])
+
+  if(!isLogined) return null;
 
   return (
       <main className='grow'>

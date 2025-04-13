@@ -8,6 +8,7 @@ aside_bp = Blueprint('aside', __name__)
 @aside_bp.route('/aside', methods=['GET'])
 @jwt_required()
 def get_aside():
+    print("\n=== /api/aside called ===")
     user_id = get_jwt_identity()
     current_user = Users.query.get(user_id)
     friends = []
@@ -18,8 +19,10 @@ def get_aside():
     ).filter(Friends.status == 'accepted').all()
     
     for friendship in friendships:
-        friend_id = friendship.friend_id if friendship.user_id == user_id else friendship.user_id
+        print("friendship", friendship.user_id, user_id, friendship.friend_id, int(friendship.user_id) == int(user_id))
+        friend_id = friendship.friend_id if int(friendship.user_id) == int(user_id) else friendship.user_id
         friend = Users.query.get(friend_id)
+        print("friend", friend.id, friend.name, friend.surname)
         
         #Znajdź pokój czatu przez Room_Users
         room = Room.query.join(Room_Users, (Room.id == Room_Users.room_id))\
@@ -28,7 +31,6 @@ def get_aside():
                 Room.type == RoomType.PRIVATE
             )\
             .group_by(Room.id)\
-            .having(func.count(Room_Users.user_id) == 2)\
             .first()
 
         last_msg = Messages.query.filter_by(room_id=room.id).order_by(desc(Messages.timestamp)).first() if room else None

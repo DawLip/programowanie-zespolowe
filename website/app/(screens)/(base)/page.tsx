@@ -30,12 +30,33 @@ export default function Home() {
       })
       .catch(error => console.error('Błąd:', error));
   }, [])
+
+  const inviteFriend = (friend_id:number) => {
+    fetch(`${config.api}/user/invite/${friend_id}`, {
+      headers: {"Authorization": `Bearer ${Cookies.get('token')}`},
+      method: "POST",
+    })
+      .then(response => response.json())
+      .then((response:any) => {
+        console.log("response", response)
+      })
+      .catch(error => console.error('Błąd:', error));
+  }
+  const handleInvitation = (friend_id:number, method:string) => {
+    fetch(`${config.api}/user/invitation-${method}/${friend_id}`, {
+      headers: {"Authorization": `Bearer ${Cookies.get('token')}`},
+      method: "POST",
+    })
+      .then(response => response.json())
+      .then((response:any) => {console.log("response", response)})
+      .catch(error => console.error('Błąd:', error));
+  }
   
   return (
     <>
       <Header header={"Welcome Adam"}/>
       <main className='flex-col grow gap-32 px-32'>
-        {invitations[0] && <Section header="Invitations">
+        {invitations && invitations[0] && <Section header="Invitations">
           {invitations.map(invitation => (
           <UserCard 
             name={invitation.name}
@@ -43,8 +64,8 @@ export default function Home() {
             isActive={true} 
             buttons={
               <>
-                <Icon src={"/icons/cross.png"} size={24} onClick={()=>{}}/>
-                <Icon src={"/icons/check.png"} size={32} onClick={()=>{}}/>
+                <Icon src={"/icons/cross.png"} size={24} onClick={()=>{handleInvitation(invitation.id, "decline")}}/>
+                <Icon src={"/icons/check.png"} size={32} onClick={()=>{handleInvitation(invitation.id, "accept")}}/>
               </>
             }
           />))}
@@ -89,12 +110,12 @@ export default function Home() {
         </Section>
         <Section header="You may know">
             <div className='flex-wrap gap-16'>
-              {mayKnow.map((mn)=><UserCard 
+              {mayKnow && mayKnow.map((mn)=><UserCard 
                 name={mn.name}
                 surname={mn.surname} 
                 isActive={mn.isActive} 
-                buttons={<Icon src="/icons/add-friend.png" size={24} onClick={()=>{}}/>}
-                onClick={()=>router.push('/profile/t')}
+                buttons={<Icon src="/icons/add-friend.png" size={24} onClick={()=>inviteFriend(mn.id)}/>}
+                onClick={()=>router.push(`/profile/${mn.id}`)}
               />)}
             </div>
         </Section>

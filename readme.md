@@ -11,3 +11,6 @@ Run for development ```npm run dev```
 ```
  TODO
 ```
+
+# Bugs
+- bug after register user => / show nothing
