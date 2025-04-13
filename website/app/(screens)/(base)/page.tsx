@@ -14,6 +14,8 @@ export default function Home() {
   const [mayKnow, setMayKnow] = useState<any[]>([]);
   const [invitations, setInvitations] = useState<any[]>([]);
 
+  const userId = Cookies.get('userId');
+
   useEffect(() => { if(!Cookies.get('token')) router.push('/login') },[] )
   useEffect(() => {
     fetch(`${config.api}/dashboard`, {
@@ -23,7 +25,7 @@ export default function Home() {
       .then((response:any) => {
         console.log("response", response)
 
-        setUsers(response.users);
+        setUsers(response.lastChats);
         setGroups(response.groups)
         setMayKnow(response.mayKnow)
         setInvitations(response.invitations)
@@ -80,10 +82,10 @@ export default function Home() {
                 isActive={u.isActive}
                 onClick={()=>router.push('/chat')}
               >
-                <div className='flex-col gap-8'>
-                  <Message isUserAuthor={true}>Hey, whats up?</Message>
-                  <Message isUserAuthor={false}>Hey, whats up?</Message>
-                  <Message isUserAuthor={true}>Hey, whats up?</Message>
+                <div className='flex-col gap-8 pt-8'>
+                  {u.messages?.map((m:any, i:number) => (
+                    <Message key={i} isUserAuthor={m.userId == userId}>{m.message}</Message>
+                  ))}
                 </div>
               </UserCard>
             ))}
@@ -101,7 +103,7 @@ export default function Home() {
               >
                 <div className='flex-col grow-999 gap-8 pt-8 justify-end'>
                   { g.messages?.map((m:any, i:number) => (
-                    <Message key={i} isUserAuthor={m.authorId == 0}>{m.message}</Message>
+                    <Message key={i} isUserAuthor={m.userId == userId}>{m.message}</Message>
                   ))}
                 </div>
               </UserCard>

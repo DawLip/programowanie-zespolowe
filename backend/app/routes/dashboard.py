@@ -8,6 +8,7 @@ dashboard_bp = Blueprint('dashboard', __name__)
 @dashboard_bp.route('/dashboard', methods=['GET'])
 @jwt_required()
 def get_dashboard():
+    print("\n=== /dashboard called ===")
     user_id = get_jwt_identity()
     
     #Pobierz zaproszenia
@@ -22,25 +23,35 @@ def get_dashboard():
     ).all()
     
     for room in private_rooms:
-        #Znajdź drugiego użytkownika w pokoju
+        print(f"Processing room: {room.id}")
+        
+        # Znajdź drugiego użytkownika w pokoju
         other_user = Users.query.join(Room_Users).filter(
             Room_Users.room_id == room.id,
             Users.id != user_id
         ).first()
+
+        print(f"other_user: {other_user.name if other_user else 'Brak'}")
         
-        last_message = Messages.query.filter_by(room_id=room.id)\
-            .order_by(Messages.timestamp.desc()).first()
-        
-        if last_message and other_user:
-            author = Users.query.get(last_message.user_id)  #Pobierz autora przez user_id
+        last_messages = Messages.query.filter_by(room_id=room.id)\
+            .order_by(Messages.timestamp.desc())\
+            .limit(3).all()  # Pobierz do 3 ostatnich wiadomości
+
+        if last_messages and other_user:
+            messages_formatted = []
+            for msg in reversed(last_messages):  # Odwróć, żeby były w kolejności rosnącej (najstarsza -> najnowsza)
+                author = Users.query.get(msg.user_id)
+                messages_formatted.append({
+                    "userId": author.id,
+                    "messageAuthor": author.name if author else "Unknown",
+                    "message": msg.content
+                })
+
             last_chats.append({
                 "userId": other_user.id,
                 "name": other_user.name,
                 "surname": other_user.surname,
-                "messages": [{
-                    "messageAuthor": author.name if author else "Unknown",
-                    "message": last_message.content
-                }],
+                "messages": messages_formatted,
                 "isActive": other_user.is_active
             })
 
