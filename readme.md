@@ -16,4 +16,7 @@ Run for development ```npm run dev```
 ## frontend
 - bug after register user => / show nothing
 - /chat => chat window is strange, show wrond personal info in private room
-- /aside => dont refresh 
+- /aside => dont refresh
+
+## backend
+- /dashboard you may know => sometime show friends 

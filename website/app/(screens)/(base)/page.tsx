@@ -9,6 +9,8 @@ import {Header, Aside, Icon, Section, UserCard, Message } from './../../componen
 export default function Home() {
   const router = useRouter();
 
+  const [user, setUser] = useState<any>({});
+
   const [users, setUsers] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [mayKnow, setMayKnow] = useState<any[]>([]);
@@ -16,14 +18,13 @@ export default function Home() {
 
   const userId = Cookies.get('userId');
 
-  useEffect(() => { if(!Cookies.get('token')) router.push('/login') },[] )
   useEffect(() => {
     fetch(`${config.api}/dashboard`, {
       headers: {"Authorization": `Bearer ${Cookies.get('token')}`}
     })
       .then(response => response.json())
       .then((response:any) => {
-        console.log("response", response)
+        console.log("/dashboard", response)
 
         setUsers(response.lastChats);
         setGroups(response.groups)
@@ -31,6 +32,16 @@ export default function Home() {
         setInvitations(response.invitations)
       })
       .catch(error => console.error('Błąd:', error));
+
+      fetch(`${config.api}/user/${userId}`, {
+        headers: {"Authorization": `Bearer ${Cookies.get('token')}`}
+      })
+        .then(response => response.json())
+        .then((response:any) => {
+          console.log("${config.api}/user/${userId", response)
+          setUser(response);
+        })
+        .catch(error => console.error('Błąd:', error));
   }, [])
 
   const inviteFriend = (friend_id:number) => {
@@ -56,7 +67,7 @@ export default function Home() {
   
   return (
     <>
-      <Header header={"Welcome Adam"}/>
+      <Header header={`Welcome ${user.name}`}/>
       <main className='flex-col grow gap-32 px-32'>
         {invitations && invitations[0] && <Section header="Invitations">
           {invitations.map(invitation => (
@@ -103,7 +114,7 @@ export default function Home() {
               >
                 <div className='flex-col grow-999 gap-8 pt-8 justify-end'>
                   { g.messages?.map((m:any, i:number) => (
-                    <Message key={i} isUserAuthor={m.userId == userId}>{m.message}</Message>
+                    <Message key={i+m.message} isUserAuthor={m.userId == userId}>{m.message}</Message>
                   ))}
                 </div>
               </UserCard>
