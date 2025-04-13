@@ -1,23 +1,39 @@
 import c from '../colors';
-export default function TextInput(
-  {label, value, placeholder, password, setValue}: 
+
+const Input = (
+  {label, value, placeholder,password, setValue, long}:
   {
     label: string, 
-    value: string,
-    placeholder?: string
+    value: string, 
+    placeholder:string, 
     password?: boolean,
-    setValue: Function
-  }) {
-  return (
-    <div className="flex-col border-1 p-8 rounded-lg">
-      <label className="text-xs on_surface_light_gray">{label}</label>
-      <input 
-        type={password ? "password" : "text"} 
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        className='text-xl'
-      />
-    </div>
-  );
-}
+    setValue: Function, 
+    long?: boolean
+
+  }) => (
+  <div className='flex-col'>
+    <span className='text-xl on_surface_light_gray font-bold'>{label}</span>
+    {
+      long
+        ? (
+          <textarea 
+            value={value} 
+            placeholder={placeholder} 
+            onChange={e=>setValue(e.target.value)}
+            className={`flex on_surface_gray text-xl`}
+          />
+        )
+        : (
+          <input 
+            type={password ? "password" : "text"} 
+            value={value}
+            placeholder={placeholder}
+            onChange={e=>setValue(e.target.value)}
+            className={`flex on_surface_gray text-[32px]`}
+          />
+        )
+    }
+  </div>
+)
+
+export default Input;

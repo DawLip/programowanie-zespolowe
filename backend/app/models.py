@@ -15,7 +15,7 @@ class RoomType(Enum):
 class Role(Enum):
     USER = 'USER'
     ADMIN = 'ADMIN'
-    SUPERADMIN = 'SUPERADMIN'
+    OWNER = 'OWNER'
 
 # Relacja znajomych
 class Friends(db.Model):

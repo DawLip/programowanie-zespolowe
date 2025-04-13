@@ -2,14 +2,35 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Cookies from 'js-cookie';
 
 import { ProfileImage, Button } from './'
 
+import config from "../config"
 import c from '../colors'
 
 export default function Aside({ users, groups }:{users: any, groups: any}) {
   const [friendsOrGroups, setFriendsOrGroups] = useState(true)
   const router = useRouter();
+
+  const createGroup = () => {
+    fetch(`${config.api}/group/new`, {
+      headers: {
+        "Authorization": `Bearer ${Cookies.get('token')}`,
+        "Content-Type": "application/json"
+      },
+      method: "POST",
+      body: JSON.stringify({
+        name: "Name your group",
+        description: ""
+      })
+    })
+      .then(response => response.json())
+      .then((response:any) => {
+        router.push(`/group-settings/${response.groupId}`)
+      })
+      .catch(error => console.error('Błąd:', error));
+  }
 
   return (
     <aside className="sticky top-0 w-256 h-screen flex-col gap-16 p-16 aside_bg">
@@ -25,7 +46,7 @@ export default function Aside({ users, groups }:{users: any, groups: any}) {
           className="flex-col overflow-y-scroll scrollbar-none gap-16" 
           style={{height: "calc(100vh - 124px - 16px)"}}
         >
-          {!friendsOrGroups && <Button label="Create" onClick={()=>router.push("/group-settings")} type="outlined2" />}
+          {!friendsOrGroups && <Button label="Create" onClick={()=>createGroup()} type="outlined2" />}
 
           {friendsOrGroups && users && users.map((u:any) => <UserCard user={u} onClick={()=>router.push(`/chat/private/${u.roomId}`)}/>)}
           {!friendsOrGroups && groups && groups.map((g:any) => <UserCard user={g} onClick={()=>router.push(`/chat/group/${g.roomId}`)}/>)}

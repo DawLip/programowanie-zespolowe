@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie';
 import config from "../../../config"
 
-import {Header, Aside, Icon, Section, UserCard, Message, ProfileImage } from '../../../components';
+import {Header, Aside, Icon, Section, UserCard, Message, ProfileImage, TextInput } from '../../../components';
 
 export default function Settings() {
   const router = useRouter();
@@ -81,13 +81,13 @@ export default function Settings() {
           <div className='px-16 py-8 bg-amber-50 rounded-full' onClick={handleSave}>Save</div>
         </div>
         <div className='flex-col gap-16'>
-          <Input label={"About me"} value={about} placeholder={"Write something about you"} setValue={setAbout} long />
-          <Input label={"Email"} value={email} placeholder={"Your email"} setValue={setEmail}/>
-          <Input label={"Phone"} value={phone} placeholder={"Your phone number"} setValue={setPhone} />
-          <Input label={"Address"} value={address} placeholder={"Your address"} setValue={setAddress} />
-          <Input label={"Facebook URL"} value={facebookURL} placeholder={"Your facebook link"} setValue={setFacebookURL} />
-          <Input label={"Instagram URL"} value={instagramURL} placeholder={"Your instagram link"} setValue={setInstagramURL} />
-          <Input label={"LinkedIn URL"} value={linkedinURL} placeholder={"Your LinkedIn link"} setValue={setLinkedinURL} />
+          <TextInput label={"About me"} value={about} placeholder={"Write something about you"} setValue={setAbout} long />
+          <TextInput label={"Email"} value={email} placeholder={"Your email"} setValue={setEmail}/>
+          <TextInput label={"Phone"} value={phone} placeholder={"Your phone number"} setValue={setPhone} />
+          <TextInput label={"Address"} value={address} placeholder={"Your address"} setValue={setAddress} />
+          <TextInput label={"Facebook URL"} value={facebookURL} placeholder={"Your facebook link"} setValue={setFacebookURL} />
+          <TextInput label={"Instagram URL"} value={instagramURL} placeholder={"Your instagram link"} setValue={setInstagramURL} />
+          <TextInput label={"LinkedIn URL"} value={linkedinURL} placeholder={"Your LinkedIn link"} setValue={setLinkedinURL} />
         </div>
       </div>
     </main>
@@ -108,39 +108,11 @@ const LineInput = ({value, placeholder, setValue}:{value: string, placeholder: s
       ref={inputRef}
       value={value} 
       onChange={e=>setValue(e.target.value)} 
-      placeholder="Name"
+      placeholder={placeholder}
       className='flex shrink text-5xl on_surface_gray'
       style={{ width: `${value.length}ch` }}
     />
     <span ref={spanRef} className="absolute invisible text-5xl">{value || placeholder}</span>
   </>
 )}
-
-const Input = ({label, value, placeholder, setValue, long}:{label: string, value: string, placeholder:string, setValue: Function, long?: boolean}) => (
-  <div className='flex-col'>
-    <span className='text-xl on_surface_light_gray font-bold'>{label}</span>
-    {
-      long
-        ? (
-          <textarea 
-            value={value} 
-            placeholder={placeholder} 
-            onChange={e=>setValue(e.target.value)}
-            className={`flex on_surface_gray text-xl`}
-          />
-        )
-        : (
-          <input 
-            type="text" 
-            value={value}
-            placeholder={placeholder}
-            onChange={e=>setValue(e.target.value)}
-            className={`flex on_surface_gray text-[32px]`}
-          />
-        )
-    }
-    
-    
-  </div>
-)
 

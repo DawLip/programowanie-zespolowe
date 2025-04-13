@@ -1,6 +1,6 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models import Room, Room_Users, Messages, Users, db
+from app.models import Role, Room, Room_Users, Messages, RoomType, Users, db
 
 chat_bp = Blueprint('chat', __name__)
 
@@ -58,7 +58,7 @@ def get_room_messages(room_id):
     
     
 # Tworzenie Chatu Grupowego
-@chat_bp.route('/api/rooms/create', methods=['POST'])
+@chat_bp.route('/rooms/create', methods=['POST'])
 @jwt_required()
 def create_room():
     current_user_id = get_jwt_identity()
@@ -76,11 +76,11 @@ def create_room():
         db.session.add(new_room)
         db.session.flush()
 
-        # Add creator as SUPERADMIN
+        # Add creator as OWNER
         db.session.add(Room_Users(
             room_id=new_room.id,
             user_id=current_user_id,
-            role=Role.SUPERADMIN
+            role=Role.OWNER
         ))
         
         # Add members if provided
@@ -105,16 +105,16 @@ def create_room():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # Usuwanie czatu
-@chat_bp.route('/api/rooms/<int:room_id>', methods=['DELETE'])
+@chat_bp.route('/rooms/<int:room_id>', methods=['DELETE'])
 @jwt_required()
 def delete_group_chat(room_id):
     current_user_id = get_jwt_identity()
     
-    # Sprawdź uprawnienia (tylko superadmin może usunąć)
+    # Sprawdź uprawnienia 
     membership = Room_Users.query.filter_by(
         room_id=room_id,
         user_id=current_user_id,
-        role=Role.SUPERADMIN
+        role=Role.ADMIN
     ).first()
     
     if not membership:
@@ -132,13 +132,13 @@ def delete_group_chat(room_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # Dodawanie użytkowników do czatu
-@chat_bp.route('/api/rooms/<int:room_id>/add-member', methods=['POST'])
+@chat_bp.route('/rooms/<int:room_id>/add-member', methods=['POST'])
 @jwt_required()
 def add_group_member(room_id):
     current_user_id = get_jwt_identity()
     data = request.get_json()
     
-    # Sprawdź uprawnienia (admin lub superadmin)
+    # Sprawdź uprawnienia (admin lub owner)
     membership = Room_Users.query.filter_by(
         room_id=room_id,
         user_id=current_user_id
@@ -175,7 +175,7 @@ def add_group_member(room_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # Usuwanie użytkowników z czatu
-@chat_bp.route('/api/rooms/<int:room_id>/remove-member', methods=['POST'])
+@chat_bp.route('/rooms/<int:room_id>/remove-member', methods=['POST'])
 @jwt_required()
 def remove_group_member(room_id):
     current_user_id = get_jwt_identity()
@@ -199,8 +199,8 @@ def remove_group_member(room_id):
         user_id=data['user_id']
     ).first()
     
-    if target_membership.role == Role.SUPERADMIN:
-        return jsonify({"status": "error", "message": "Cannot remove superadmin"}), 400
+    if target_membership.role == Role.OWNER:
+        return jsonify({"status": "error", "message": "Cannot remove owner"}), 400
     
     # Zwykły użytkownik może usunąć tylko siebie
     if requester_membership.role == Role.USER and current_user_id != data['user_id']:
@@ -215,17 +215,18 @@ def remove_group_member(room_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # Zmiana uprawnień użytkownika
-@chat_bp.route('/api/rooms/<int:room_id>/change-role', methods=['POST'])
+@chat_bp.route('/rooms/<int:room_id>/change-role', methods=['POST'])
 @jwt_required()
 def change_member_role(room_id):
     current_user_id = get_jwt_identity()
     data = request.get_json()
+    print(f"Changing role in room {room_id} of user {data['user_id']} to {data['new_role']}")
     
     # Tylko superadmin może zmieniać role
     requester_membership = Room_Users.query.filter_by(
         room_id=room_id,
         user_id=current_user_id,
-        role=Role.SUPERADMIN
+        role=Role.OWNER
     ).first()
     
     if not requester_membership:
@@ -258,7 +259,7 @@ def change_member_role(room_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # Pobieranie informacji o czacie
-@chat_bp.route('/api/rooms/<int:room_id>', methods=['GET'])
+@chat_bp.route('/rooms/<int:room_id>', methods=['GET'])
 @jwt_required()
 def get_room_info(room_id):
     current_user_id = get_jwt_identity()
@@ -291,4 +292,34 @@ def get_room_info(room_id):
             } for m in members]
         }), 200
     except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    
+# Zapisz zmiany w nazwie i opisie
+@chat_bp.route('/rooms/<int:room_id>/save-changes', methods=['POST'])
+@jwt_required()
+def save_room_changes(room_id):
+    current_user_id = get_jwt_identity()
+    data = request.get_json()
+    
+    # Sprawdź uprawnienia (admin/superadmin)
+    membership = Room_Users.query.filter_by(
+        room_id=room_id,
+        user_id=current_user_id
+    ).first()
+    
+    if not membership or membership.role == Role.USER:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 403
+    
+    if not data or 'name' not in data or 'description' not in data:
+        return jsonify({"status": "error", "message": "Missing parameters"}), 400
+    
+    try:
+        room = Room.query.get(room_id)
+        room.name = data['name']
+        room.description = data['description']
+        db.session.commit()
+        
+        return jsonify({"status": "success", "message": "Room updated"}), 200
+    except Exception as e:
+        db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 500

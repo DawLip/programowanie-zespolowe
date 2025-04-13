@@ -20,6 +20,7 @@ def get_group(group_id):
         'id': group.id,
         'name': group.name,
         'type': group.type.value,
+        'description': group.description,
         'members': [{
             'id': m.id,
             'name': m.name,
@@ -43,10 +44,16 @@ def create_group():
     db.session.commit()
 
     #Add self as admin
-
+    user_id = get_jwt_identity()
+    db.session.add(Room_Users(
+        room_id=new_group.id,
+        user_id=user_id,
+        role='OWNER'
+    ))
+    db.session.commit()
     #Add members
 
     #Get group id
     group_id = new_group.id
 
-    return jsonify({"Group id": group_id,"status": "ok"}), 200
+    return jsonify({"groupId": group_id,"status": "ok"}), 200

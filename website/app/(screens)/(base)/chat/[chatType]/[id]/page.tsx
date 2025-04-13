@@ -15,6 +15,7 @@ export default function ChatPage(props:any) {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [correspondent, setCorrespondent] = useState<any>({});
+  const [isShowInfo, setIsShowInfo] = useState(false);
 
   const userId = Cookies.get('userId');
 
@@ -68,7 +69,13 @@ export default function ChatPage(props:any) {
   return (
     <>
       <Header 
-        header={params.chatType=="private" ? `${correspondent.name} ${correspondent.surname}` : correspondent.name} 
+        header={<>
+          {params.chatType=="private" ? `${correspondent.name} ${correspondent.surname}` : correspondent.name} 
+          <Icon 
+          src={"/icons/settings.png"} 
+          size={32} 
+          onClick={()=>setIsShowInfo(prev=>!prev)}/>
+        </>} 
         backArrow 
         userProfileSrc=' '
       />
@@ -108,7 +115,7 @@ export default function ChatPage(props:any) {
             <Icon src={"/icons/send.png"} size={32} onClick={sendMessage}/>
           </div>
         </section>
-        <section 
+        {isShowInfo && <section 
           className='flex-1 flex-col grow gap-32 p-32 surface rounded-[32] overflow-y-scroll scrollbar-none'
           style={{}}
         >
@@ -117,18 +124,18 @@ export default function ChatPage(props:any) {
               {correspondent.name} {correspondent.surname}
             </span>
             <div className='gap-16'>
-              <Icon src={"/icons/facebook.png"} size={48} onClick={()=>{}}/>
-              <Icon src={"/icons/instagram.png"} size={48} onClick={()=>{}}/>
-              <Icon src={"/icons/linkedin.png"} size={48} onClick={()=>{}}/>
+              {correspondent.facebook && <Icon src={"/icons/facebook.png"} size={48} onClick={()=>{}}/>}
+              {correspondent.instagram && <Icon src={"/icons/instagram.png"} size={48} onClick={()=>{}}/>}
+              {correspondent.linkedin && <Icon src={"/icons/linkedin.png"} size={48} onClick={()=>{}}/>}
             </div>
           </div>
           <div className='flex-col gap-16'>
-            {correspondent.destription && <LabeledContent label="About me" content={correspondent.destription} long/>}
+            {correspondent.description && <LabeledContent label="About" content={correspondent.description} long/>}
             {correspondent.email && <LabeledContent label="Email" content={correspondent.email}/>}
             {correspondent.phone && <LabeledContent label="Phone" content={correspondent.phone}/>}
             {correspondent.address && <LabeledContent label="Address" content={correspondent.address}/>}
           </div>
-        </section>
+        </section>}
       </main>
     </>
   );
