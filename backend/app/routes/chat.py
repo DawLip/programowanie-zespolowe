@@ -48,6 +48,7 @@ def get_room_messages(room_id):
     ).all()
     
     return jsonify([{
+        'message_id': msg.Messages.id,
         'user_id': msg.Messages.user_id,
         'message': msg.Messages.content,
         'timestamp': msg.Messages.timestamp.isoformat(),

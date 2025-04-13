@@ -68,12 +68,14 @@ def register_socket_handlers(socketio):
                 print(f"User {user_id} attempting to join room {room_id}")
                 
                 if Room_Users.query.filter_by(user_id=user_id, room_id=room_id).first():
+                    print(f"User {user_id} joined room {room_id}")
                     join_room(room_id)
                     emit('join_room_response', {
                         'status': 'ok',
                         f'message': 'Successfully joined room {room_id}'  # Generic success message
                     })
                 else:
+                    print(f"User {user_id} is not authorized to join room {room_id}")
                     emit('join_room_response', {
                         'status': 'authorisation error',
                         f'message': 'Not authorized to join room {room_id}'
@@ -151,6 +153,8 @@ def register_socket_handlers(socketio):
             # Przygotuj odpowiedź zgodną z dokumentacją
             print(f"Sending response: {user.name}, {user.surname}, {message_content}, {new_message.timestamp}")
             response = {
+                'message_id': new_message.id,
+                'user_id': user.id,
                 'name': user.name,
                 'surname': user.surname,  # Dodane
                 'message': message_content,

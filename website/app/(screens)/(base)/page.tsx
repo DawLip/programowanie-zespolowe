@@ -8,11 +8,6 @@ import {Header, Aside, Icon, Section, UserCard, Message } from './../../componen
 
 export default function Home() {
   const router = useRouter();
-  
-  // const u = { id: 0, name: 'John', surname:'Doe', lastMessage: "hey!", lastMessageAuthor:"you", isActive: true }
-  // const g = { id: 0, name: "Python lovers", lastMessage: "hey!", lastMessageAuthor:"you", isActive: true }
-  // const users = [u,u,u,u,u,u];
-  // const groups = [g,g,g,g,g];
 
   const [users, setUsers] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);

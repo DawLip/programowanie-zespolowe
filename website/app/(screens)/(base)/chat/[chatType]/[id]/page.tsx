@@ -2,13 +2,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation'
 import Cookies from 'js-cookie';
+import { SocketProvider, useSocket } from '../../../../../socket';
 import config from "../../../../../config"
 
 import {Header, Aside, Icon, Section, UserCard, Message } from '../../../../../components';
 
-export default function ChatPage() {
+export default function ChatPage(props:any) {
   const router = useRouter();
   const params = useParams();
+  const { socket, isConnected } = useSocket();
 
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
@@ -41,6 +43,28 @@ export default function ChatPage() {
       })
       .catch(error => console.error('Błąd:', error));
    },[] )
+  useEffect(() => {
+    if(!isConnected) return;
+    socket.emit("join_room", {rooms: [params.id]});
+    socket.on("join_room_response", (res:any) => {
+      console.log("join_room_response", res)
+    });
+
+    socket.on("new_message", (message:any) => {
+      console.log("new_message", message)
+      setMessages((prev:any) => [...prev, message]);
+    });
+  }, [socket, isConnected]);
+
+  const sendMessage = () => {
+    if(!message) return;
+    socket.emit("send_message", {
+      room: params.id,
+      message: message
+    });
+    setMessage("");
+  }
+
   return (
     <>
       <Header 
@@ -49,15 +73,29 @@ export default function ChatPage() {
         userProfileSrc=' '
       />
       <main className='gap-32 px-32'>
-        <section className='flex-1 flex-col gap-16'>
+        <section 
+          className='flex-1 flex-col gap-16'
+        >
           <div 
             ref={chatRef} 
-            className='flex-col gap-32 p-32 overflow-y-scroll scrollbar-none surface rounded-[32] bottom-0 justify-end' 
-            style={{height: 'calc(100vh - 96px - 64px - 32px)'}}
+            className='flex-col gap-16 overflow-y-scroll scrollbar-none'
+            style={{height: 'calc(100vh - 96px - 64px - 32px - 16px)'}}
           >
-            {messages && messages.map((m:any)=>(
-              <Message isUserAuthor={m.user_id==userId} src="">{m.message}</Message>
-            ))}
+            <div className='flex-col gap-4 p-32 surface rounded-[32] bottom-0 justify-end'>
+            
+              {messages[0] && messages.map((m:any, i:number)=>(
+                <Message 
+                  key={m.message_id}
+                  isFirst={(messages[i-1] && (messages[i-1].name!=m.name))||i==0}
+                  isLast={(messages[i+1] && (messages[i+1].name!=m.name))||i+1==messages.length}
+                  name={m.name}
+                  isUserAuthor={m.user_id==userId} 
+                  src="/icons/add-friend.png"
+                >
+                  {m.message}
+                </Message>
+              ))}
+            </div>
           </div>
           <div className='items-center h-64 px-32 surface rounded-[32]'>
             <input 
@@ -67,12 +105,12 @@ export default function ChatPage() {
               onChange={e=>setMessage(e.target.value)}
               className='flex grow text-2xl on_surface_gray .placeholder-[#A0A0A0]'
             />
-            <Icon src={"/icons/send.png"} size={32} onClick={()=>{}}/>
+            <Icon src={"/icons/send.png"} size={32} onClick={sendMessage}/>
           </div>
         </section>
         <section 
           className='flex-1 flex-col grow gap-32 p-32 surface rounded-[32] overflow-y-scroll scrollbar-none'
-          style={{height: 'calc(100vh - 96px)'}}
+          style={{}}
         >
           <div className='justify-between'>
             <span className='text-5xl on_surface_gray font-normal'>

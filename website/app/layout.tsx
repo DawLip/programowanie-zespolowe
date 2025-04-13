@@ -1,6 +1,8 @@
+
 import { Inter } from 'next/font/google'
 import type { Metadata } from "next";
 import "./globals.css";
+import { SocketProvider, useSocket } from './socket';
 
 const roboto = Inter({
   weight: ['200', '300','400', '600','700'],
