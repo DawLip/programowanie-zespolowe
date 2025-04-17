@@ -133,7 +133,7 @@ export default function GroupSettings({ params }: { params: Promise<{ groupId: s
             setValue={setnewName} 
             placeholder="Set group name"
           />
-          {userRole != "USER" && <div onClick={saveChanges}>Save changes</div>}
+          {userRole != "USER" && <div className={"cursor-pointer"} onClick={saveChanges}>Save changes</div>}
           <TextInput 
             label="About" 
             value={newDescription} 

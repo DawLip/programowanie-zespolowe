@@ -43,12 +43,12 @@ const Header =(
   return (
     <header className='justify-between px-32 h-96'>
       <div className='items-center gap-16 text-[32px] on_surface_gray font-bold'>
-        {backArrow && <Icon src={"/icons/back-arrow.png"} size={40} onClick={()=>router.push('/')}/>}
+        {backArrow && <Icon src={"/icons/back-arrow.png"} size={40} onClick={()=>router.back()}/>}
         {userProfileSrc && <ProfileImage src={userProfileSrc} size={40} isActive={true}/>}
         {header}
       </div>
       <div className='gap-24 py-24'>
-        <div className='items-center gap-12' onClick={()=>router.push('/settings')}>
+        <div className='items-center gap-12 cursor-pointer' onClick={()=>router.push('/settings')}>
           <span className='text-[24px] on_surface_light_gray'>{name} {surname}</span>
           <ProfileImage src={""} size={32} />
         </div>

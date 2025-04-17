@@ -28,13 +28,14 @@ export default function Aside({ users, groups }:{users: any, groups: any}) {
       .then(response => response.json())
       .then((response:any) => {
         router.push(`/group-settings/${response.groupId}`)
+        window.location.reload();
       })
       .catch(error => console.error('Błąd:', error));
   }
 
   return (
     <aside className="sticky top-0 w-256 h-screen flex-col gap-16 p-16 aside_bg">
-      <header className="white text-3xl font-bold justify-center">
+      <header className="white text-3xl font-bold justify-center cursor-pointer" onClick={()=>router.push('/')}>
         ChatNow
       </header>
       <section className="flex-col gap-16">
@@ -48,8 +49,8 @@ export default function Aside({ users, groups }:{users: any, groups: any}) {
         >
           {!friendsOrGroups && <Button label="Create" onClick={()=>createGroup()} type="outlined2" />}
 
-          {friendsOrGroups && users && users.map((u:any) => <UserCard user={u} onClick={()=>router.push(`/chat/private/${u.roomId}`)}/>)}
-          {!friendsOrGroups && groups && groups.map((g:any) => <UserCard user={g} onClick={()=>router.push(`/chat/group/${g.roomId}`)}/>)}
+          {friendsOrGroups && users && users.map((u:any) => <UserCard key={"fogf"+u.id} user={u} onClick={()=>router.push(`/chat/private/${u.roomId}`)}/>)}
+          {!friendsOrGroups && groups && groups.map((g:any) => <UserCard key={"fogf"+g.roomId}  user={g} onClick={()=>router.push(`/chat/group/${g.roomId}`)}/>)}
         </div>
       </section>
     </aside>

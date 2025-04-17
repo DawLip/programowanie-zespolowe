@@ -24,6 +24,7 @@ def get_group(group_id):
         'members': [{
             'id': m.id,
             'name': m.name,
+            'surname': m.surname,
             'role': Room_Users.query.filter_by(room_id=group_id, user_id=m.id).first().role.value
         } for m in members]
     })

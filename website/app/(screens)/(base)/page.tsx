@@ -2,12 +2,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie';
+import { useSocket } from '../../socket';
 import config from "./../../config"
 
 import {Header, Aside, Icon, Section, UserCard, Message } from './../../components/';
 
 export default function Home() {
   const router = useRouter();
+  const { socket, isConnected } = useSocket();
 
   const [user, setUser] = useState<any>({});
 
@@ -18,7 +20,7 @@ export default function Home() {
 
   const userId = Cookies.get('userId');
 
-  useEffect(() => {
+  const updateDashboard = () => {
     fetch(`${config.api}/dashboard`, {
       headers: {"Authorization": `Bearer ${Cookies.get('token')}`}
     })
@@ -42,7 +44,15 @@ export default function Home() {
           setUser(response);
         })
         .catch(error => console.error('Błąd:', error));
-  }, [])
+  }
+  useEffect(() => updateDashboard(), [])
+
+  useEffect(() => {
+      if(!isConnected) return;
+      socket.on("new_message", (message:any) => {
+        updateDashboard()
+      });
+    }, [socket, isConnected]);
 
   const inviteFriend = (friend_id:number) => {
     fetch(`${config.api}/user/invite/${friend_id}`, {
@@ -87,7 +97,7 @@ export default function Home() {
           <div className='flex-wrap gap-32'>
             {users && users.map(u => (
               <UserCard 
-                key={u.id}
+                key={"d-f"+u.id}
                 name={u.name} 
                 surname={u.surname} 
                 isActive={u.isActive}
@@ -106,7 +116,7 @@ export default function Home() {
           <div className='flex-wrap gap-16 items-stretch'>
             {groups && groups.map(g => (
               <UserCard 
-                key={g.groupId}
+                key={"dg"+g.groupId}
                 name={g.name} 
                 surname="" 
                 isActive={g.isActive}
@@ -124,6 +134,7 @@ export default function Home() {
         <Section header="You may know">
             <div className='flex-wrap gap-16'>
               {mayKnow && mayKnow.map((mn)=><UserCard 
+                key={"d-mn"+mn.id}
                 name={mn.name}
                 surname={mn.surname} 
                 isActive={mn.isActive} 

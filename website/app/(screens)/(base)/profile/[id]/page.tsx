@@ -50,7 +50,6 @@ export default function Settings({params}: {params: {id: string}}) {
               <LineInput value={name} setValue={setName} placeholder="Name"/>
               <LineInput value={surname} setValue={setSurname} placeholder="Surname"/>
             </div>
-            <div className='px-16 py-8 bg-amber-50 rounded-full' onClick={()=>{}}>Save</div>
           </div>
           <div className='flex-col gap-16'>
             <Input label={"About me"} value={about} placeholder={"Write something about you"} setValue={setAbout} long editable={false} />

@@ -72,13 +72,13 @@ def register_socket_handlers(socketio):
                     join_room(room_id)
                     emit('join_room_response', {
                         'status': 'ok',
-                        f'message': 'Successfully joined room {room_id}'  # Generic success message
+                        'message': f'Successfully joined room {room_id}'  # Generic success message
                     })
                 else:
                     print(f"User {user_id} is not authorized to join room {room_id}")
                     emit('join_room_response', {
                         'status': 'authorisation error',
-                        f'message': 'Not authorized to join room {room_id}'
+                        'message': f'Not authorized to join room {room_id}'
                     })
 
             except Exception as e:
@@ -154,6 +154,7 @@ def register_socket_handlers(socketio):
             print(f"Sending response: {user.name}, {user.surname}, {message_content}, {new_message.timestamp}")
             response = {
                 'message_id': new_message.id,
+                'group_id': room_id,
                 'user_id': user.id,
                 'name': user.name,
                 'surname': user.surname,  # Dodane

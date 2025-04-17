@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation'
 import Cookies from 'js-cookie';
-import { SocketProvider, useSocket } from '../../../../../socket';
+import { useSocket } from '../../../../../socket';
 import config from "../../../../../config"
 
 import {Header, Aside, Icon, Section, UserCard, Message } from '../../../../../components';
@@ -23,13 +23,16 @@ export default function ChatPage(props:any) {
 
   useEffect(() => { if(chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight; }, [messages]);
   useEffect(() => { 
-    fetch(`${config.api}/${params.chatType=="private"?"user":"group"}/${params.id}`, {
+    fetch(`${config.api}/group/${params.id}`, {
       headers: {"Authorization": `Bearer ${Cookies.get('token')}`}
     })
       .then(response => response.json())
-      .then((response:any) => {
-        console.log("/group/${params.id}", response)
-        setCorrespondent(response);
+      .then((group:any) => {
+        console.log("/group/${params.id}", group);
+        if(group.type=="GROUP") setCorrespondent(group);
+        else {
+          setCorrespondent(group.members.find((m:any) => m.id!=userId));
+        }
       })
       .catch(error => console.error('Błąd:', error));
    },[] )
@@ -53,6 +56,8 @@ export default function ChatPage(props:any) {
 
     socket.on("new_message", (message:any) => {
       console.log("new_message", message)
+      if(message.group_id!=params.id) return;
+      if(message.message_id==messages[messages.length-1].message_id) return;
       setMessages((prev:any) => [...prev, message]);
     });
   }, [socket, isConnected]);
@@ -71,10 +76,18 @@ export default function ChatPage(props:any) {
       <Header 
         header={<>
           {params.chatType=="private" ? `${correspondent.name} ${correspondent.surname}` : correspondent.name} 
-          <Icon 
-          src={"/icons/settings.png"} 
-          size={32} 
-          onClick={()=>setIsShowInfo(prev=>!prev)}/>
+          <>
+            <Icon 
+            src={"/icons/info.png"} 
+            size={32} 
+            onClick={()=>setIsShowInfo(prev=>!prev)}/>
+            {params.chatType=="GROUP"
+            &&  <Icon 
+                  src={"/icons/settings.png"} 
+                  size={32} 
+                  onClick={()=>router.push(`/group-settings/${params.id}`)}/>
+            }
+          </>
         </>} 
         backArrow 
         userProfileSrc=' '
@@ -88,7 +101,7 @@ export default function ChatPage(props:any) {
             className='flex-col gap-16 overflow-y-scroll scrollbar-none'
             style={{height: 'calc(100vh - 96px - 64px - 32px - 16px)'}}
           >
-            <div className='flex-col gap-4 p-32 surface rounded-[32] bottom-0 justify-end'>
+            <div className='flex-col min-h-full gap-4 p-32 surface rounded-[32] bottom-0 justify-end'>
             
               {messages[0] && messages.map((m:any, i:number)=>(
                 <Message 

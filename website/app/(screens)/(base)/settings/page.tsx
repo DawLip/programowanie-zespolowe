@@ -10,15 +10,15 @@ import {Header, Aside, Icon, Section, UserCard, Message, ProfileImage, TextInput
 export default function Settings() {
   const router = useRouter();
 
-  const [name, setName] = useState("Adam");
-  const [surname, setSurname] = useState("Freineg");
-  const [about, setAbout] = useState("Za Twoją zgodą, my i nasi partnerzy (881) używamy plików cookie lub podobnych technologii do przechowywania i przetwarzania danych osobowych oraz uzyskiwania dostępu do tych danych, takich jak informacje o Twojej wizycie na tej stronie internetowej, adresy IP i identyfikatory plików cookie. Niektórzy partnerzy nie proszą o zgodę");
-  const [email, setEmail] = useState("+48 505 575 832");
-  const [phone, setPhone] = useState("Katowice, Krakowska 73a");
-  const [address, setAddress] = useState("fdsafdsfdg fd ");
-  const [facebookURL, setFacebookURL] = useState("gfdsgdfsgdfs");
-  const [instagramURL, setInstagramURL] = useState("gfdsgsdfgdfs");
-  const [linkedinURL, setLinkedinURL] = useState("gfdsgfdsg");
+  const [name, setName] = useState("");
+  const [surname, setSurname] = useState("");
+  const [about, setAbout] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [facebookURL, setFacebookURL] = useState("");
+  const [instagramURL, setInstagramURL] = useState("");
+  const [linkedinURL, setLinkedinURL] = useState("");
 
   const userID = Cookies.get('userId')
     
@@ -62,7 +62,7 @@ export default function Settings() {
     })
       .then(response => response.json())
       .then((response:any) => {
-        console.log(response);
+        window.location.reload();
       })
       .catch(error => console.error('Błąd:', error));
   }
@@ -78,7 +78,7 @@ export default function Settings() {
             <LineInput value={name} setValue={setName} placeholder="Name"/>
             <LineInput value={surname} setValue={setSurname} placeholder="Surname"/>
           </div>
-          <div className='px-16 py-8 bg-amber-50 rounded-full' onClick={handleSave}>Save</div>
+          <div className='px-16 py-8 bg-amber-50 rounded-full cursor-pointer' onClick={handleSave}>Save</div>
         </div>
         <div className='flex-col gap-16'>
           <TextInput label={"About me"} value={about} placeholder={"Write something about you"} setValue={setAbout} long />
