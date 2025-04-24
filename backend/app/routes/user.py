@@ -63,6 +63,12 @@ def update_user_by_id(user_id):
     user.name = data.get('name', user.name)
     user.surname = data.get('surname', user.surname)
     user.email = data.get('email', user.email)
+    user.phone = data.get('phone', user.phone)
+    user.address = data.get('address', user.address)
+    user.facebook = data.get('facebook', user.facebook)
+    user.instagram = data.get('instagram', user.instagram)
+    user.linkedin = data.get('linkedin', user.linkedin)
+    user.aboutme = data.get('about', user.about)
 
     try:
         db.session.commit()
