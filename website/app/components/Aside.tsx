@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie';
 
 import { ProfileImage, Button } from './'
+import { useSocket } from '../socket';
 
 import config from "../config"
 import c from '../colors'
@@ -12,6 +13,7 @@ import c from '../colors'
 export default function Aside({ users, groups }:{users: any, groups: any}) {
   const [friendsOrGroups, setFriendsOrGroups] = useState(true)
   const router = useRouter();
+  const { socket, isConnected } = useSocket();
 
   const createGroup = () => {
     fetch(`${config.api}/group/new`, {
@@ -28,7 +30,7 @@ export default function Aside({ users, groups }:{users: any, groups: any}) {
       .then(response => response.json())
       .then((response:any) => {
         router.push(`/group-settings/${response.groupId}`)
-        window.location.reload();
+        socket.emit("refresh", {})
       })
       .catch(error => console.error('Błąd:', error));
   }

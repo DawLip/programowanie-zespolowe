@@ -46,9 +46,9 @@ export default function Settings({params}: {params: {id: string}}) {
         <div className='flex-col grow gap-32 p-32 rounded-[32px] surface'>
           <div className='gap-16 items-center'>
             <ProfileImage src={""} size={64}/>
-            <div>
-              <LineInput value={name} setValue={setName} placeholder="Name"/>
-              <LineInput value={surname} setValue={setSurname} placeholder="Surname"/>
+            <div className='gap-8'>
+              <LineInput value={name} setValue={()=>{}} placeholder="Name"/>
+              <LineInput value={surname} setValue={()=>{}} placeholder="Surname"/>
             </div>
           </div>
           <div className='flex-col gap-16'>
@@ -67,24 +67,10 @@ export default function Settings({params}: {params: {id: string}}) {
 }
 
 const LineInput = ({value, placeholder, setValue}:{value: string, placeholder: string, setValue: Function}) => {
-  const spanRef = useRef<HTMLSpanElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => { if (spanRef.current && inputRef.current) inputRef.current.style.width = `${spanRef.current.offsetWidth + 10}px`; }, [value]);
-
   return (
-  <>
-    <input 
-      type="text" 
-      ref={inputRef}
-      value={value} 
-      onChange={e=>setValue(e.target.value)} 
-      placeholder="Name"
-      className='flex shrink text-5xl on_surface_gray'
-      style={{ width: `${value.length}ch` }}
-    />
-    <span ref={spanRef} className="absolute invisible text-5xl">{value || placeholder}</span>
-  </>
+    <div className='flex shrink text-5xl on_surface_gray'>
+      {value}
+    </div>
 )}
 
 const Input = ({label, value, placeholder, setValue, long, editable}:{label: string, value: string, placeholder:string, setValue: Function, long?: boolean,editable?:boolean}) => (

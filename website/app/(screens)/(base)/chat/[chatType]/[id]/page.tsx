@@ -57,7 +57,7 @@ export default function ChatPage(props:any) {
     socket.on("new_message", (message:any) => {
       console.log("new_message", message)
       if(message.group_id!=params.id) return;
-      if(message.message_id==messages[messages.length-1].message_id) return;
+      if(messages.filter((m:any)=>m.message_id==message.message_id).length>0) return;
       setMessages((prev:any) => [...prev, message]);
     });
   }, [socket, isConnected]);
@@ -69,6 +69,31 @@ export default function ChatPage(props:any) {
       message: message
     });
     setMessage("");
+  }
+
+  function hasDuplicatesByKey(array, key) {
+    const seen = new Set();
+    for (const item of array) {
+      if (seen.has(item[key])) {
+        return true;
+      }
+      seen.add(item[key]);
+    }
+    return false;
+  }
+
+  if(hasDuplicatesByKey(messages, "message_id")) {
+    const seen = new Set();
+    const result = [];
+  
+    for (const item of messages) {
+      if (!seen.has(item.message_id)) {
+        seen.add(item.message_id);
+        result.push(item);
+      }
+    }
+    
+      setMessages(result)
   }
 
   return (

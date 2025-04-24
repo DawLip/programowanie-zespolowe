@@ -31,7 +31,7 @@ def register():
     db.session.commit()
 
     # Tworzenie tokenu JWT
-    access_token = create_access_token(identity=new_user.id)
+    access_token = create_access_token(identity=str(new_user.id))
 
     return jsonify({"status": "success", "access_token": access_token, "userId":new_user.id}), 200
 

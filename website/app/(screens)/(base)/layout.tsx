@@ -43,8 +43,12 @@ export default function Layout({children}: {children: any}) {
     if(!isConnected) return;
 
     socket.on("new_message", (message:any) => {
-      updateAside()
+      updateAside();
     });
+    socket.on("refresh", () => {
+      console.log("refresh aside")
+      updateAside();
+    })
   }, [isConnected]);
 
   if(!isLogined) return null;

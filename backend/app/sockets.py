@@ -96,6 +96,11 @@ def register_socket_handlers(socketio):
         print(f"User {user_id} wants to leave room {room_id}")
         leave_room(room_id)
 
+    @socketio.on('refresh')
+    @jwt_required()
+    def handle_refresh(data):
+        socketio.emit('refresh', {'message': 'refresh'})
+    
     @socketio.on('send_message')
     @jwt_required()
     def handle_send_message(data):
