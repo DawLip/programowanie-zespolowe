@@ -37,7 +37,7 @@ class Users(db.Model):
     linkedin = db.Column(db.String(50), nullable=True)
     password = db.Column(db.String(128), nullable=False)                        #in register
     is_active = db.Column(db.Boolean, default=True)
-    aboutme = db.Column(db.Text, nullable=True)
+    # aboutme = db.Column(db.Text, nullable=True) Dodaj to jak bedziesz dodawal ladne dane
 
     # Propozycja dodania daty utworzenia i aktualizacji
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
