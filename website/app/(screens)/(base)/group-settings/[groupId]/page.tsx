@@ -156,7 +156,7 @@ export default function GroupSettings({ params }: { params: Promise<{ groupId: s
                   name={m.name} 
                   surname={m.surname} 
                   isActive={m.isActive} 
-                  buttons={<Icon src={"/icons/cross.png"} size={40} onClick={()=>addToGroup(m.id)} />}
+                  buttons={<Icon src={"/icons/check.png"} size={40} onClick={()=>addToGroup(m.id)} />}
                 />
               ))}
             </div>

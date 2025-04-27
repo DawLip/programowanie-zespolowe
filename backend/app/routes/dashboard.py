@@ -31,8 +31,7 @@ def get_dashboard():
             Users.id != user_id
         ).first()
 
-        print(f"other_user: {other_user.name if other_user else 'Brak'}")
-        
+        print(other_user)
         last_messages = Messages.query.filter_by(room_id=room.id)\
             .order_by(Messages.timestamp.desc())\
             .limit(3).all()  # Pobierz do 3 ostatnich wiadomości
@@ -49,6 +48,7 @@ def get_dashboard():
 
             last_chats.append({
                 "userId": other_user.id,
+                "roomId": room.id,
                 "name": other_user.name,
                 "surname": other_user.surname,
                 "messages": messages_formatted,

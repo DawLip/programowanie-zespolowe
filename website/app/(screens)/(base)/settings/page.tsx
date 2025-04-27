@@ -28,6 +28,7 @@ export default function Settings() {
     })
       .then(response => response.json())
       .then((response:any) => {
+        console.log(`${config.api}/user/${userID}`, response)
         setName(response.name || "");
         setSurname(response.surname || "");
         setAbout(response.about || "");

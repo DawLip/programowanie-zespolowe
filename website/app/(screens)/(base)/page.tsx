@@ -66,6 +66,8 @@ export default function Home() {
       .catch(error => console.error('Błąd:', error));
   }
   const handleInvitation = (friend_id:number, method:string) => {
+    setInvitations(prev=>prev.filter(inv => inv!=friend_id))
+
     fetch(`${config.api}/user/invitation-${method}/${friend_id}`, {
       headers: {"Authorization": `Bearer ${Cookies.get('token')}`},
       method: "POST",
@@ -101,7 +103,7 @@ export default function Home() {
                 name={u.name} 
                 surname={u.surname} 
                 isActive={u.isActive}
-                onClick={()=>router.push('/chat')}
+                onClickCard={()=>router.push(`/chat/private/${u.roomId}`)}
               >
                 <div className='flex-col gap-8 pt-8'>
                   {u.messages?.map((m:any, i:number) => (
@@ -120,7 +122,7 @@ export default function Home() {
                 name={g.name} 
                 surname="" 
                 isActive={g.isActive}
-                onClick={()=>router.push('/chat')}
+                onClickCard={()=>router.push(`/chat/group/${g.roomId}`)}
               >
                 <div className='flex-col grow-999 gap-8 pt-8 justify-end'>
                   { g.messages?.map((m:any, i:number) => (
