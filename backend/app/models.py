@@ -37,7 +37,8 @@ class Users(db.Model):
     linkedin = db.Column(db.String(50), nullable=True)
     password = db.Column(db.String(128), nullable=False)                        #in register
     is_active = db.Column(db.Boolean, default=True)
-    # aboutme = db.Column(db.Text, nullable=True) Dodaj to jak bedziesz dodawal ladne dane
+    about_me = db.Column(db.TEXT(250), nullable=True)                       #opis użytkownika
+    photos = db.relationship('UserPhoto', backref='user', lazy=True)
 
     # Propozycja dodania daty utworzenia i aktualizacji
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
@@ -55,6 +56,13 @@ class Users(db.Model):
 
     def __repr__(self):
         return f'<User {self.email}>'
+
+class UserPhoto(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    photo_path = db.Column(db.String(255), nullable=False)
+    is_profile = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
 # Model pokoju
 class Room(db.Model):
@@ -88,6 +96,7 @@ class Messages(db.Model):
     content = db.Column(db.Text, nullable=False)
     message_type = db.Column(db.Enum(MessageType), default=MessageType.TEXT, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    image_path = db.Column(db.String(255))
 
     __table_args__ = (
         db.Index('idx_room_timestamp', 'room_id', 'timestamp'),  # Szybkie pobieranie historii
