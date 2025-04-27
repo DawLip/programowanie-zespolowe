@@ -37,7 +37,7 @@ class Users(db.Model):
     linkedin = db.Column(db.String(50), nullable=True)
     password = db.Column(db.String(128), nullable=False)                        #in register
     is_active = db.Column(db.Boolean, default=True)
-    about_me = db.Column(db.String(25), nullable=True)                          #opis użytkownika
+    about_me = db.Column(db.TEXT(250), nullable=True)                       #opis użytkownika
     photos = db.relationship('UserPhoto', backref='user', lazy=True)
 
     # Propozycja dodania daty utworzenia i aktualizacji
