@@ -37,6 +37,8 @@ class Users(db.Model):
     linkedin = db.Column(db.String(50), nullable=True)
     password = db.Column(db.String(128), nullable=False)                        #in register
     is_active = db.Column(db.Boolean, default=True)
+    about_me = db.Column(db.String(25), nullable=True)                          #opis użytkownika
+    photos = db.relationship('UserPhoto', backref='user', lazy=True)
 
     # Propozycja dodania daty utworzenia i aktualizacji
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
@@ -54,6 +56,13 @@ class Users(db.Model):
 
     def __repr__(self):
         return f'<User {self.email}>'
+
+class UserPhoto(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    photo_path = db.Column(db.String(255), nullable=False)
+    is_profile = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
 # Model pokoju
 class Room(db.Model):

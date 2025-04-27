@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import Role, Room, Room_Users, Messages, RoomType, Users, db
+from datetime import datetime
 
 chat_bp = Blueprint('chat', __name__)
 
@@ -114,7 +115,7 @@ def delete_group_chat(room_id):
     membership = Room_Users.query.filter_by(
         room_id=room_id,
         user_id=current_user_id,
-        role=Role.ADMIN
+        role=Role.OWNER
     ).first()
     
     if not membership:
