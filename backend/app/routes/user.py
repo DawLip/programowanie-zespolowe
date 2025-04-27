@@ -1,3 +1,6 @@
+import os
+from werkzeug.utils import secure_filename
+from flask import send_from_directory
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import Users, Friends, db
@@ -223,3 +226,55 @@ def decline_invite(user_id):
     db.session.commit()
 
     return jsonify({"status": "ok", "message": "Invitation declined"}), 200
+
+PROFILE_PICTURES_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'utils', 'profilep')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+DEFAULT_PROFILE_PICTURE = 'default.jpg'
+
+# Utwórz folder jeśli nie istnieje
+os.makedirs(PROFILE_PICTURES_DIR, exist_ok=True)
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@user_bp.route('/<int:user_id>/profile-picture', methods=['POST'])
+@jwt_required()
+def upload_profile_picture(user_id):
+    # Weryfikacja użytkownika
+    current_user_id = get_jwt_identity()
+    if current_user_id != user_id:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 403
+
+    # Sprawdzenie czy przesłano plik
+    if 'file' not in request.files:
+        return jsonify({"status": "error", "message": "No file part"}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"status": "error", "message": "No selected file"}), 400
+
+    if file and allowed_file(file.filename):
+        # Usunięcie starego zdjęcia jeśli istnieje
+        for ext in ALLOWED_EXTENSIONS:
+            old_path = os.path.join(PROFILE_PICTURES_DIR, f'{user_id}.{ext}')
+            if os.path.exists(old_path):
+                os.remove(old_path)
+
+        # Zapisanie nowego zdjęcia
+        filename = f"{user_id}.{file.filename.rsplit('.', 1)[1].lower()}"
+        filepath = os.path.join(PROFILE_PICTURES_DIR, filename)
+        file.save(filepath)
+        return jsonify({"status": "ok", "message": "File uploaded successfully"}), 200
+
+    return jsonify({"status": "error", "message": "Invalid file type"}), 400
+
+@user_bp.route('/<int:user_id>/profile-picture', methods=['GET'])
+def get_profile_picture(user_id):
+    # Sprawdzenie istniejącego pliki
+    for ext in ALLOWED_EXTENSIONS:
+        filename = f"{user_id}.{ext}"
+        if os.path.isfile(os.path.join(PROFILE_PICTURES_DIR, filename)):
+            return send_from_directory(PROFILE_PICTURES_DIR, filename)
+        
+    # Zwróć domyślne zdjęcie jeśli nie znaleziono
+    return send_from_directory(PROFILE_PICTURES_DIR, DEFAULT_PROFILE_PICTURE)
