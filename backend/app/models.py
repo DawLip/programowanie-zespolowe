@@ -96,6 +96,7 @@ class Messages(db.Model):
     content = db.Column(db.Text, nullable=False)
     message_type = db.Column(db.Enum(MessageType), default=MessageType.TEXT, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    image_path = db.Column(db.String(255))
 
     __table_args__ = (
         db.Index('idx_room_timestamp', 'room_id', 'timestamp'),  # Szybkie pobieranie historii
