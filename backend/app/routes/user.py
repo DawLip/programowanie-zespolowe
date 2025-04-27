@@ -37,7 +37,8 @@ def get_user_by_id(user_id):
     print(f"User: {user.name} {user.surname}"
           f"email: {user.email}\n phone: {user.phone}\n"
           f"address: {user.address}\n facebook: {user.facebook}\n"
-          f"instagram: {user.instagram}\n linkedin: {user.linkedin}\n")
+          f"instagram: {user.instagram}\n linkedin: {user.linkedin}\n"
+          f"About: {user.about_me}\n")
 
     return jsonify({
         "id": user.id,

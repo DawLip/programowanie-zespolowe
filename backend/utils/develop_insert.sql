@@ -83,6 +83,48 @@ VALUES
     (9, 10, datetime('now'), 'accepted'),
     (1, 5, datetime('now'), 'declined'); 
 
+INSERT INTO room (type, name, description, created_at)
+VALUES
+    ('PRIVATE', 'Private Chat John-Basic', 'Private chat between John and Basic', datetime('now')),
+    ('PRIVATE', 'Private Chat John-Jane', 'Private chat between John and Jane', datetime('now')),
+    ('PRIVATE', 'Private Chat Basic-Jane', 'Private chat between Basic and Jane', datetime('now')),
+    ('PRIVATE', 'Private Chat Basic-Alice', 'Private chat between Basic and Alice', datetime('now')),
+    ('PRIVATE', 'Private Chat Bob-Charlie', 'Private chat between Bob and Charlie', datetime('now')),
+    ('PRIVATE', 'Private Chat Eve-Frank', 'Private chat between Eve and Frank', datetime('now')),
+    ('PRIVATE', 'Private Chat Frank-Grace', 'Private chat between Frank and Grace', datetime('now'));
+
+
+INSERT INTO room_users (room_id, user_id, role, joined_at)
+VALUES
+    -- Private Chat John-Basic (room_id = 6)
+    (6, 1, 'USER', datetime('now')),
+    (6, 2, 'USER', datetime('now')),
+
+    -- Private Chat John-Jane (room_id = 7)
+    (7, 1, 'USER', datetime('now')),
+    (7, 3, 'USER', datetime('now')),
+
+    -- Private Chat Basic-Jane (room_id = 8)
+    (8, 2, 'USER', datetime('now')),
+    (8, 3, 'USER', datetime('now')),
+
+    -- Private Chat Basic-Alice (room_id = 9)
+    (9, 2, 'USER', datetime('now')),
+    (9, 4, 'USER', datetime('now')),
+
+    -- Private Chat Bob-Charlie (room_id = 10)
+    (10, 5, 'USER', datetime('now')),
+    (10, 6, 'USER', datetime('now')),
+
+    -- Private Chat Eve-Frank (room_id = 11)
+    (11, 8, 'USER', datetime('now')),
+    (11, 9, 'USER', datetime('now')),
+
+    -- Private Chat Frank-Grace (room_id = 12)
+    (12, 9, 'USER', datetime('now')),
+    (12, 10, 'USER', datetime('now'));
+
+
 --Kod do czyszczenia bazy danych
 PRAGMA foreign_keys = OFF;
 
