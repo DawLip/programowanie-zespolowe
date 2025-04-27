@@ -33,6 +33,12 @@ def get_user_by_id(user_id):
     if user_id in friends_ids:
         friends_ids.remove(user_id)
 
+    #print user information
+    print(f"User: {user.name} {user.surname}"
+          f"email: {user.email}\n phone: {user.phone}\n"
+          f"address: {user.address}\n facebook: {user.facebook}\n"
+          f"instagram: {user.instagram}\n linkedin: {user.linkedin}\n")
+
     return jsonify({
         "id": user.id,
         "password": user.password,
