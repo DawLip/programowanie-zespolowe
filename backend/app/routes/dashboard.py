@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models import Users, Messages, Room, Room_Users, Friends, RoomType
+from app.models import Users, Messages, Room, Room_Users, Friends, RoomType, db
 from sqlalchemy import desc, func
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -79,11 +79,18 @@ def get_dashboard():
             "isActive": True
         })
 
-    #Sugerowani znajomi
+    # Sugerowani znajomi
+    may_know_subquery = db.session.query(Friends.user_id, Friends.friend_id)\
+        .filter(
+            (Friends.user_id == user_id) |
+            (Friends.friend_id == user_id)
+        ).subquery()
+
     may_know = Users.query.filter(
-        ~Users.friends.any(id=user_id),
+        ~Users.id.in_(db.session.query(may_know_subquery.c.user_id)),
+        ~Users.id.in_(db.session.query(may_know_subquery.c.friend_id)),
         Users.id != user_id
-    ).limit(5).all()
+    ).order_by(func.random()).limit(5).all()
 
     return jsonify({
         'invitations': [{
