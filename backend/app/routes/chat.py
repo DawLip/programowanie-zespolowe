@@ -115,7 +115,7 @@ def delete_group_chat(room_id):
     membership = Room_Users.query.filter_by(
         room_id=room_id,
         user_id=current_user_id,
-        role=Role.ADMIN
+        role=Role.OWNER
     ).first()
     
     if not membership:

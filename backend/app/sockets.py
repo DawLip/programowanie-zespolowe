@@ -2,6 +2,10 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_jwt_extended.exceptions import JWTExtendedException  # General JWT error
 from flask_socketio import emit, join_room, leave_room
 from app.models import Users, Messages, Room_Users, MessageType, db
+import base64
+import os
+from datetime import datetime
+from werkzeug.utils import secure_filename
 
 def register_socket_handlers(socketio):
     @socketio.on('connect')
@@ -174,3 +178,82 @@ def register_socket_handlers(socketio):
         except Exception as e:
             print(f"Error sending message: {str(e)}")
             emit('message_error', {'message': 'Failed to send message'})
+            
+# # Konfiguracja
+# UPLOAD_FOLDER = 'static/uploads'
+# ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+# MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+# @socketio.on('send_image')
+# @jwt_required()
+# def handle_send_image(data):
+#     """
+#     Handle image upload and sending through websocket.
+    
+#     Parameters:
+#         data (dict): Contains:
+#             - 'room': room ID
+#             - 'image_data': base64 encoded image
+#             - 'filename': original filename
+#             - 'file_size': size in bytes
+#     """
+#     try:
+#         user_id = get_jwt_identity()
+#         room_id = data['room']
+        
+#         # Sprawdź uprawnienia
+#         if not Room_Users.query.filter_by(user_id=user_id, room_id=room_id).first():
+#             emit('image_error', {'message': 'Not authorized to send to this room'})
+#             return
+
+#         # Walidacja danych
+#         if not all(key in data for key in ['image_data', 'filename', 'file_size']):
+#             emit('image_error', {'message': 'Missing required fields'})
+#             return
+
+#         if data['file_size'] > MAX_FILE_SIZE:
+#             emit('image_error', {'message': f'File too large (max {MAX_FILE_SIZE/1024/1024}MB)'})
+#             return
+
+#         # Przygotuj folder na upload
+#         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+#         # Generuj unikalną nazwę pliku
+#         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+#         filename = secure_filename(f"{user_id}_{timestamp}_{data['filename']}")
+#         filepath = os.path.join(UPLOAD_FOLDER, filename)
+
+#         # Zapisz obraz (base64 -> plik)
+#         image_data = data['image_data'].split(",")[1]  # Usuń nagłówek (np. "data:image/png;base64,")
+#         with open(filepath, "wb") as f:
+#             f.write(base64.b64decode(image_data))
+
+#         # Zapisz wiadomość
+#         new_message = Messages(
+#             user_id=user_id,
+#             room_id=room_id,
+#             content=filename,  # Przechowujemy nazwę pliku
+#             message_type=MessageType.IMAGE,
+#             image_path=filepath
+#         )
+#         db.session.add(new_message)
+#         db.session.commit()
+
+#         # Przygotuj odpowiedź
+#         user = Users.query.get(user_id)
+#         response = {
+#             'message_id': new_message.id,
+#             'user_id': user.id,
+#             'name': user.name,
+#             'surname': user.surname,
+#             'image_url': f"/{filepath}",  # URL względny
+#             'thumbnail_url': f"/{generate_thumbnail(filepath)}",  # Opcjonalnie
+#             'date': new_message.timestamp.isoformat(),
+#             'original_filename': data['filename']
+#         }
+
+#         emit('new_image', response, room=room_id)
+
+#     except Exception as e:
+#         print(f"Error sending image: {str(e)}")
+#         emit('image_error', {'message': 'Failed to send image'})

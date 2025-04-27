@@ -74,8 +74,8 @@ def update_user_by_id(user_id):
     user.facebook = data.get('facebook', user.facebook)
     user.instagram = data.get('instagram', user.instagram)
     user.linkedin = data.get('linkedin', user.linkedin)
-    # user.aboutme = data.get('about', user.about)
-
+    user.about_me = data.get('About Me', user.about_me)
+    
     try:
         db.session.commit()
         return jsonify({"status": "ok"}), 200
