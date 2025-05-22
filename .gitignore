@@ -3,3 +3,5 @@
 /fake-api/node_modules
 /fake-api/dist
 **/__pycache__/
+/latex
+/html
