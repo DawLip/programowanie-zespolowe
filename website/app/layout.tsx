@@ -12,7 +12,12 @@ const roboto = Inter({
 export const metadata: Metadata = {
   title: "ChatNow"
 };
-
+/**
+ * Główny layout 
+ * @param props - obiekt właściwości komponentu
+ * @param props.children - elementy potomne renderowane w layoucie
+ * @returns {JSX.Element} Layout
+ */
 export default function RootLayout({
   children,
 }: Readonly<{

@@ -10,6 +10,14 @@ import { useSocket } from '../socket';
 import config from "../config"
 import c from '../colors'
 
+/**
+ * Komponent Aside wyświetlający listę użytkowników lub grup oraz przycisk do tworzenia grup
+ * 
+ * @param props - obiekt właściwości komponentu
+ * @param props.users - lista użytkowników do wyświetlenia
+ * @param props.groups - lista grup do wyświetlenia
+ * @returns {JSX.Element} - komponent
+ */
 export default function Aside({ users, groups }:{users: any, groups: any}) {
   const [friendsOrGroups, setFriendsOrGroups] = useState(true)
   const router = useRouter();
@@ -59,7 +67,15 @@ export default function Aside({ users, groups }:{users: any, groups: any}) {
   );
 }
 
-const UserCard = ({user, onClick}:{user: any, onClick?: () => void}) => (
+/**
+ * Komponent karty użytkownika
+ * 
+ * @param props - obiekt właściwości komponentu
+ * @param props.user - obiekt reprezentujący użytkownika lub grupę
+ * @param props.onClick - funkcja wywoływana po kliknięciu na kartę (opcjonalna)
+ * @returns {JSX.Element} - komponent
+ */
+export const UserCard = ({user, onClick}:{user: any, onClick?: () => void}) => (
   <div className="gap-8 w-256" onClick={onClick}>
     <ProfileImage src={""} size={40} isActive={user.isActive} />
     <div className={`flex-col gap-4 text-base/19 ${onClick && "hover:cursor-pointer"}`}>
@@ -73,7 +89,16 @@ const UserCard = ({user, onClick}:{user: any, onClick?: () => void}) => (
   </div>
 )
 
-function FriendsGroupButton({callback, label, checked}:{callback: Function, label: string, checked: boolean}){
+/**
+ * Przycisk wyboru pomiędzy listą przyjaciół a listą grup
+ * 
+ * @param props - obiekt właściwości komponentu
+ * @param props.callback - funkcja zmieniająca widok (przyjaciele/grupy)
+ * @param props.label - etykieta przycisku ("Friends" lub "Groups")
+ * @param props.checked - czy przycisk jest aktualnie wybrany
+ * @returns {JSX.Element} - komponent
+ */
+export function FriendsGroupButton({callback, label, checked}:{callback: Function, label: string, checked: boolean}){
   return (
     <button 
       onClick={()=>callback(label==="Friends")} 

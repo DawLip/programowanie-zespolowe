@@ -1,5 +1,15 @@
 import c from '../colors';
-export default function Header(
+
+/**
+ * Komponent Divider wyświetlający poziomy lub pionowy pasek podziału
+ * 
+ * @param props - obiekt właściwości komponentu
+ * @param props.color - kolor tła paska
+ * @param props.vertical - jeśli true, pasek jest pionowy
+ * @param props.horizontal - jeśli true, pasek jest poziomy
+ * @returns {JSX.Element} - komponent
+ */
+export default function Divider(
   {color, vertical, horizontal}: 
   {
     color: string, 

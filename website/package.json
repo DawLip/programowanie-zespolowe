@@ -24,6 +24,8 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "tailwindcss": "^4",
+    "typedoc": "^0.28.4",
+    "typedoc-plugin-markdown": "^4.6.3",
     "typescript": "^5"
   }
 }

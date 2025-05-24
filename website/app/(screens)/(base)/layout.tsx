@@ -8,6 +8,13 @@ import config from "../../config"
 
 import {Header, Aside, Icon, Section, UserCard, Message, ProfileImage } from '../../components';
 
+/**
+ * Layout strony
+ * 
+ * @param {object} props - Właściwości komponentu
+ * @param {React.ReactNode} props.children - Elementy potomne renderowane wewnątrz layoutu
+ * @returns {JSX.Element} Layout
+ */
 export default function Layout({children}: {children: any}) {
   const router = useRouter();
   const { socket, isConnected } = useSocket();

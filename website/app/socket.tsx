@@ -14,6 +14,10 @@ const SocketContext = createContext<SocketContextType>({
   isConnected: false,
 });
 
+/**
+ * Provider zarządzający połączeniem socket.io i udostępniający je komponentom potomnym
+ * @param children - elementy potomne, które mogą korzystać z kontekstu socket
+ */
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -55,7 +59,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     </SocketContext.Provider>
   );
 };
-
+/**
+ * Hook zwracający kontekst socket.io
+ * @throws Błąd jeśli hook jest używany poza kontekstem <SocketProvider>
+ * @returns Obiekt z właściwościami socket oraz isConnected
+ */
 export const useSocket = ():any => {
   const context = useContext(SocketContext);
   if (!context) {

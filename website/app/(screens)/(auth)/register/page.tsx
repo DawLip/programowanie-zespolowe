@@ -10,6 +10,12 @@ import Message from "../../../components/Message";
 
 import config from "../../../config"
 
+/**
+ * Strona rejestracji użytkownika.
+ * Zarządza formularzem rejestracji oraz przesyłaniem danych do API.
+ * 
+ * @returns {JSX.Element} Strona rejestracji.
+ */
 export default function LoginScreen() {
   const router = useRouter();
 

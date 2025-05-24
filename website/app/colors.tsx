@@ -1,3 +1,7 @@
+/**
+ * Obiekt colors zawierający stałe kolory używane w aplikacji
+ */
+
 const colors = {
   on_surface_white: "#EAE5E5",
   on_surface_gray: "#565656",

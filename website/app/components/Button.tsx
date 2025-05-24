@@ -1,10 +1,20 @@
 import c from "../colors";
+
+/**
+ * Komponent Button wyświetlający przycisk z trzema wariantami stylów
+ * 
+ * @param props - obiekt właściwości komponentu
+ * @param props.label - tekst na przycisku
+ * @param props.onClick - funkcja wywoływana po kliknięciu przycisku
+ * @param props.type - typ przycisku: "filled" | "outlined" | "outlined2" (domyślnie "filled")
+ * @returns {JSX.Element} - komponent
+ */
 export default function Button(
   {label, onClick, type="filled"}: 
   {
     label: string, 
     onClick: () => void,
-    type?: "filled" | "outlined"
+    type?: "filled" | "outlined" | "outlined2"
   }) {
   return (
     <button

@@ -1,5 +1,20 @@
 import { ProfileImage } from './'
 
+/**
+ * Komponent UserCard wyświetlający kartę użytkownika
+ * 
+ * @param props - obiekt właściwości komponentu
+ * @param props.name - imię użytkownika
+ * @param props.surname - nazwisko użytkownika
+ * @param props.isActive - czy użytkownik jest aktywny
+ * @param props.buttons - opcjonalne przyciski do wyświetlenia obok nazwy (opcjonalne)
+ * @param props.children - kontent karty (opcjonalne)
+ * @param props.style - dodatkowe stylowanie (opcjonalne)
+ * @param props.className - klasy (opcjonalne)
+ * @param props.onClick - funkcja wywoływana po kliknięciu na element z imieniem i nazwiskiem (opcjonalne)
+ * @param props.onClickCard - funkcja wywoływana po kliknięciu na całą kartę (opcjonalne)
+ * @returns {JSX.Element} - komponent
+ */
 const UserCard = ({name, surname, isActive, buttons, children, style, className, onClick, onClickCard}:{
   name: String,
   surname: String,

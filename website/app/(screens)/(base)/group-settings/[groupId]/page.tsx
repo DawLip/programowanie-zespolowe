@@ -7,6 +7,18 @@ import config from "../../../../config"
 
 import {Header, Aside, Icon, Section, UserCard, Message } from '../../../../components';
 
+/**
+ * Strona ustawień grupy GroupSettings
+ * Umożliwia zarządzanie ustawieniami grupy, w tym:
+ * - wyświetlanie i edycję nazwy i opisu grupy,
+ * - dodawanie i usuwanie członków,
+ * - zmiana ról członków,
+ * - filtrowanie członków według ról (OWNER, ADMIN, USER).
+ * 
+ * @param {object} props - Właściwości komponentu
+ * @param {Promise<{groupId: string}>} props.params - Promise zawierający ID grupy
+ * @returns {JSX.Element} JSX element strony ustawień grupy
+ */
 export default function GroupSettings({ params }: { params: Promise<{ groupId: string }> }) {
   const { groupId } = use(params);
   const router = useRouter();
@@ -209,7 +221,29 @@ export default function GroupSettings({ params }: { params: Promise<{ groupId: s
   );
 }
 
-const ParticipantCard = ({name, surname, isActive, role, id, removeMember,setRole, userRole}:any) => (
+/** 
+ * @param {object} props - Propsy komponentu
+ * @param {string} props.name - Imię użytkownika
+ * @param {string} props.surname - Nazwisko użytkownika
+ * @param {boolean} props.isActive - Status aktywności użytkownika
+ * @param {string} props.role - Rola użytkownika (OWNER, ADMIN, USER)
+ * @param {string} props.id - ID użytkownika
+ * @param {Function} props.removeMember - Funkcja do usuwania członka z grupy
+ * @param {Function} props.setRole - Funkcja do zmiany roli użytkownika
+ * @param {string} props.userRole - Rola aktualnego użytkownika
+ * @returns {JSX.Element}
+ */
+export const ParticipantCard = ({name, surname, isActive, role, id, removeMember,setRole, userRole}:{
+  name: string,
+  surname: string,
+  isActive: boolean,  
+  role: string,
+  id: string
+  removeMember: (id:string)=>void,
+  setRole: (id:string, role:string)=>void,
+  userRole: string
+
+}) => (
   <UserCard name={name} surname={surname} isActive={isActive} 
     buttons={
       <>
@@ -223,7 +257,15 @@ const ParticipantCard = ({name, surname, isActive, role, id, removeMember,setRol
   />
 )
 
-const LabeledContent = ({label, content, long, children}:{label: string, content?: string, long?: boolean, children?: any}) => (
+/**
+ * @param {object} props
+ * @param {string} props.label - Tekst etykiety
+ * @param {string} [props.content] - Opcjonalna zawartość tekstowa
+ * @param {boolean} [props.long] - Flaga do wyświetlania dłuższego tekstu (większa czcionka)
+ * @param {React.ReactNode} [props.children] - Dzieci komponentu
+ * @returns {JSX.Element} Komponent
+ */
+export const LabeledContent = ({label, content, long, children}:{label: string, content?: string, long?: boolean, children?: any}) => (
   <div className='flex-col'>
     <span className='text-xl on_surface_light_gray font-bold'>{label}</span>
     {content && <p className={`on_surface_gray ${long?"text-xl":"text-[32px]"}`}>{content}</p>}
@@ -231,7 +273,14 @@ const LabeledContent = ({label, content, long, children}:{label: string, content
   </div>
 )
 
-const LineInput = ({value, placeholder, setValue}:{value: string, placeholder: string, setValue: Function}) => {
+/**
+ * @param {object} props
+ * @param {string} props.value - Wartość inputa
+ * @param {string} props.placeholder - Tekst zastępczy
+ * @param {Function} props.setValue - Funkcja aktualizująca wartość inputa
+ * @returns {JSX.Element} Komponent
+ */
+export const LineInput = ({value, placeholder, setValue}:{value: string, placeholder: string, setValue: Function}) => {
   const spanRef = useRef<HTMLSpanElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 

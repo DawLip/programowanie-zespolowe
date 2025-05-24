@@ -10,6 +10,12 @@ import Message from "../../../components/Message";
 
 import config from "../../../config"
 
+/**
+ * Strona logowania.
+ * Zarządza formularzem logowania użytkownika.
+ * 
+ * @returns {JSX.Element} Strona logowania.
+ */
 export default function LoginScreen() {
   const router = useRouter();
 

@@ -7,6 +7,14 @@ import config from "../../../../config"
 
 import {Header, Aside, Icon, Section, UserCard, Message, ProfileImage } from '../../../../components';
 
+/**
+ * Strona profilu użytkownika.
+ * Umożliwia przeglądanie profili urzytkowników
+ * 
+ * @param {object} props - Właściwości komponentu
+ * @param {{id: string}} props.params - Parametry trasy zawierające ID użytkownika
+ * @returns {JSX.Element} Strona profilu użytkownika
+ */
 export default function Settings({params}: {params: {id: string}}) {
   const router = useRouter();
 
@@ -66,14 +74,33 @@ export default function Settings({params}: {params: {id: string}}) {
   );
 }
 
-const LineInput = ({value, placeholder, setValue}:{value: string, placeholder: string, setValue: Function}) => {
+/**
+ * Komponent wyświetlający jednoliniowy tekst (tylko do odczytu).
+ * @param {object} props - Właściwości komponentu
+ * @param {string} props.value - Wyświetlana wartość tekstowa
+ * @param {string} props.placeholder - Tekst zastępczy wyświetlany, gdy wartość jest pusta
+ * @param {Function} props.setValue - Funkcja ustawiająca wartość (nieużywana, bo komponent jest tylko do odczytu)
+ * @returns {JSX.Element} JSX z tekstem wyświetlanym w divie
+ */
+export const LineInput = ({value, placeholder, setValue}:{value: string, placeholder: string, setValue: Function}) => {
   return (
     <div className='flex shrink text-5xl on_surface_gray'>
       {value}
     </div>
 )}
 
-const Input = ({label, value, placeholder, setValue, long, editable}:{label: string, value: string, placeholder:string, setValue: Function, long?: boolean,editable?:boolean}) => (
+/**
+ * Komponent Input wyświetlający etykietę oraz pole tekstowe lub tekst tylko do odczytu.
+ * @param {object} props - Właściwości komponentu
+ * @param {string} props.label - Etykieta pola
+ * @param {string} props.value - Wartość pola
+ * @param {string} props.placeholder - Tekst zastępczy pola
+ * @param {Function} props.setValue - Funkcja aktualizująca wartość
+ * @param {boolean} [props.long] - Flaga czy pole ma być długie (textarea) czy jednolinijkowe (input)
+ * @param {boolean} [props.editable] - Flaga czy pole jest edytowalne
+ * @returns {JSX.Element} JSX z etykietą oraz odpowiednim polem (textarea/input lub span)
+ */
+export const Input = ({label, value, placeholder, setValue, long, editable}:{label: string, value: string, placeholder:string, setValue: Function, long?: boolean,editable?:boolean}) => (
   <div className='flex-col'>
     <span className='text-xl on_surface_light_gray font-bold'>{label}</span>
     {editable?`${

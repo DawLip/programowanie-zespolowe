@@ -7,6 +7,12 @@ import config from "./../../config"
 
 import {Header, Aside, Icon, Section, UserCard, Message } from './../../components/';
 
+/**
+ * Strona główna 
+ * Wyświetla dashboard użytkownika z listą znajomych, grup i zaproszeń do znajomych.
+ * 
+ * @returns {JSX.Element} Strona główna
+ */
 export default function Home() {
   const router = useRouter();
   const { socket, isConnected } = useSocket();

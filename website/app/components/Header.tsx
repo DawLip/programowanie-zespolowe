@@ -9,6 +9,15 @@ import { Divider, Icon, ProfileImage } from './';
 import c from '../colors';
 import { use } from 'react';
 
+/**
+ * Komponent Header wyświetlający nagłówek strony
+ * 
+ * @param props - obiekt właściwości komponentu
+ * @param props.header - zawartość nagłówka
+ * @param props.backArrow - czy wyświetlać strzałkę wstecz (opcjonalne)
+ * @param props.userProfileSrc - adres URL zdjęcia profilowego użytkownika (opcjonalne)
+ * @returns {JSX.Element} - komponent
+ */
 const Header =(
   {header, backArrow, userProfileSrc}: 
   {

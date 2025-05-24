@@ -1,11 +1,23 @@
 import c from '../colors';
 
+/**
+ * Komponent Input wyświetlający pole do wprowadzania textu z etykietą
+ * 
+ * @param props - obiekt właściwości komponentu
+ * @param props.label - etykieta pola
+ * @param props.value - aktualna wartość pola
+ * @param props.placeholder - tekst zastępczy w polu (opcjonalny)
+ * @param props.password - czy pole jest typu hasło (opcjonalne)
+ * @param props.setValue - funkcja ustawiająca nową wartość pola
+ * @param props.long - czy użyć pola textarea zamiast input (opcjonalne)
+ * @returns {JSX.Element} - komponent
+ */
 const Input = (
   {label, value, placeholder,password, setValue, long}:
   {
     label: string, 
     value: string, 
-    placeholder:string, 
+    placeholder?:string, 
     password?: boolean,
     setValue: Function, 
     long?: boolean

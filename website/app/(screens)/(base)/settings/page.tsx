@@ -7,6 +7,12 @@ import config from "../../../config"
 
 import {Header, Aside, Icon, Section, UserCard, Message, ProfileImage, TextInput } from '../../../components';
 
+/**
+ * Strona ustawień profilu użytkownika
+ * Umożliwia edycję danych osobowych i społecznościowych użytkownika
+ * 
+ * @returns {JSX.Element} Strona ustawień
+ */
 export default function Settings() {
   const router = useRouter();
 

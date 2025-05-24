@@ -7,13 +7,20 @@ import config from "../../../../../config"
 
 import {Header, Aside, Icon, Section, UserCard, Message } from '../../../../../components';
 
+/**
+ * Strona chatu
+ * Umożliwia chatowanie prywatne oraz grupowe
+ * 
+ * @param {object} props - Właściwości komponentu (nieużywane)
+ * @returns {JSX.Element} Strona czatu
+ */
 export default function ChatPage(props:any) {
   const router = useRouter();
   const params = useParams();
   const { socket, isConnected } = useSocket();
 
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<any>([]);
   const [correspondent, setCorrespondent] = useState<any>({});
   const [isShowInfo, setIsShowInfo] = useState(false);
 
@@ -71,7 +78,7 @@ export default function ChatPage(props:any) {
     setMessage("");
   }
 
-  function hasDuplicatesByKey(array, key) {
+  function hasDuplicatesByKey(array:any, key:any) {
     const seen = new Set();
     for (const item of array) {
       if (seen.has(item[key])) {
@@ -179,7 +186,14 @@ export default function ChatPage(props:any) {
   );
 }
 
-const LabeledContent = ({label, content, long}:{label: string, content: string, long?: boolean}) => (
+/**
+ * @param {object} props
+ * @param {string} props.label - Tekst etykiety
+ * @param {string} props.content - Zawartość tekstowa
+ * @param {boolean} [props.long] - Flaga do wyświetlania dłuższego tekstu
+ * @returns {JSX.Element} Komponent
+ */
+export const LabeledContent = ({label, content, long}:{label: string, content: string, long?: boolean}) => (
   <div className='flex-col'>
     <span className='text-xl on_surface_light_gray font-bold'>{label}</span>
     <p className={`on_surface_gray ${long?"text-xl":"text-[32px]"}`}>{content}</p>
