@@ -10,6 +10,13 @@ jwt = JWTManager()
 socketio = SocketIO(cors_allowed_origins="*", async_mode="threading")
 
 def create_app():
+    """
+    Funkcja tworz ca  aplikacj  Flask oraz inicjalizuje wszystkie niezb dne
+    rozszerzenia i blueprinty. Zwraca gotow  aplikacj  Flask.
+
+    Returns:
+        app (Flask): gotowa aplikacja Flask
+    """
     app = Flask(__name__)
     CORS(app)
     

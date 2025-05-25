@@ -8,6 +8,15 @@ dashboard_bp = Blueprint('dashboard', __name__)
 @dashboard_bp.route('/dashboard', methods=['GET'])
 @jwt_required()
 def get_dashboard():
+    """
+    Endpoint zwraca informacje o dashboardu zalogowanego uzytkownika
+
+    Args:
+        None
+
+    Returns:
+        JSON odpowiedz z informacjami o zaproszeniach, ostatnich czatach, grupach i sugerowanych znajomych
+    """
     print("\n=== /dashboard called ===")
     user_id = get_jwt_identity()
     

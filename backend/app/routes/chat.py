@@ -8,9 +8,15 @@ chat_bp = Blueprint('chat', __name__)
 @chat_bp.route('/my-rooms', methods=['GET'])
 @jwt_required()
 def get_my_rooms():
-    print("\n=== /api/my-rooms called ===")
-    # print("Request headers:", dict(request.headers))  # Verify Authorization header
-    
+    """
+    Endpoint zwraca listę pokoi dla zalogowanego uzytkownika
+
+    Args:
+        None
+
+    Returns:
+        JSON odpowiedz z listą pokoi
+    """
     try:
         user_id = get_jwt_identity()
         print("Decoded user_id from JWT:", user_id)
@@ -29,6 +35,15 @@ def get_my_rooms():
 @chat_bp.route('/rooms/<int:room_id>/messages', methods=['GET'])
 @jwt_required()
 def get_room_messages(room_id):
+    """
+    Endpoint zwraca listę wiadomości dla zalogowanego uzytkownika
+
+    Args:
+        room_id (int): Identyfikator pokoju
+
+    Returns:
+        JSON odpowiedz z listą wiadomości
+    """
     user_id = get_jwt_identity()
     print(f"User {user_id} wants to get messages for room {room_id}")
     
@@ -62,6 +77,23 @@ def get_room_messages(room_id):
 @chat_bp.route('/rooms/create', methods=['POST'])
 @jwt_required()
 def create_room():
+    """
+    Edpoint dla tworzenia nowego pokoju
+
+    Args:
+        name: string (nazwa pokoju)
+
+    Returns:
+        json: {
+            status: string ("success" or "error")
+            message: string (optional)
+            room_id: int
+        }
+
+    Error codes:
+        400: Missing required fields
+        400: Email is taken
+    """
     current_user_id = get_jwt_identity()
     data = request.get_json()
     
@@ -109,6 +141,18 @@ def create_room():
 @chat_bp.route('/rooms/<int:room_id>', methods=['DELETE'])
 @jwt_required()
 def delete_group_chat(room_id):
+    """
+    Endpoint dla usuwania pokoju
+
+    Args:
+        room_id: int (identyfikator pokoju)
+
+    Returns:
+        json: {
+            status: string ("success" or "error")
+            message: string (optional)
+        }
+    """
     current_user_id = get_jwt_identity()
     
     # Sprawdź uprawnienia 
@@ -136,6 +180,24 @@ def delete_group_chat(room_id):
 @chat_bp.route('/rooms/<int:room_id>/add-member', methods=['POST'])
 @jwt_required()
 def add_group_member(room_id):
+    """
+    Endpoint dla dodawania nowego uzytkownika do czatu grupowego
+
+    Args:
+        room_id (int): ID pokoju do którego dodawany jest uzytkownik
+
+    Returns:
+        json: {
+            status (str): "success" or "error"
+            message (str): Wiadomość o wyniku operacji
+        }
+
+    Error codes:
+        403: Unauthorized if the current user is not an admin or owner.
+        400: Missing user_id in the request or if the user is already in the group.
+        500: Internal server error if unable to add the user.
+    """
+
     current_user_id = get_jwt_identity()
     data = request.get_json()
     
@@ -179,6 +241,28 @@ def add_group_member(room_id):
 @chat_bp.route('/rooms/<int:room_id>/remove-member', methods=['POST'])
 @jwt_required()
 def remove_group_member(room_id):
+    """
+    Endpoint do usuwania uzytkownikow z czatu
+
+    Args:
+        room_id (int): ID pokoju z którego usuwany jest uzytkownik
+
+    Returns:
+        json: {
+            status (str): "success" or "error"
+            message (str): Wiadomość o wyniku operacji
+        }
+
+    Error codes:
+        403: Unauthorized if the current user is not a member or lacks permission to remove the target member.
+        400: Missing user_id in the request or if attempting to remove the owner.
+        500: Internal server error if unable to remove the user.
+
+    Notes:
+        - Admins and superadmins can remove any member except the owner.
+        - Regular users can only remove themselves.
+    """
+
     current_user_id = get_jwt_identity()
     data = request.get_json()
     
@@ -219,6 +303,28 @@ def remove_group_member(room_id):
 @chat_bp.route('/rooms/<int:room_id>/change-role', methods=['POST'])
 @jwt_required()
 def change_member_role(room_id):
+    """
+    Endpoint do zmiany uprawnień uzytkownikow
+
+    Args:
+        room_id (int): ID pokoju zródowego uzytkownika
+
+    Returns:
+        json: {
+            status (str): "success" or "error"
+            message (str): Wiadomość o wyniku operacji
+        }
+
+    Error codes:
+        403: Unauthorized if the current user is not a superadmin.
+        400: Missing user_id or new_role in the request, or if attempting to change the role of the superadmin.
+        404: User not found in the group.
+        500: Internal server error if unable to change the role.
+
+    Notes:
+        - Only superadmins can change the role of a member.
+        - Regular users cannot change their own role.
+    """
     current_user_id = get_jwt_identity()
     data = request.get_json()
     print(f"Changing role in room {room_id} of user {data['user_id']} to {data['new_role']}")
@@ -263,6 +369,23 @@ def change_member_role(room_id):
 @chat_bp.route('/rooms/<int:room_id>', methods=['GET'])
 @jwt_required()
 def get_room_info(room_id):
+    """
+    Endpoint do pobierania informacji o czacie
+
+    Args:
+        room_id (int): ID pokoju
+
+    Returns:
+        json: {
+            status (str): "success" or "error"
+            room (dict): Informacje o czacie
+            members (list): Lista członków czatu
+        }
+
+    Error codes:
+        403: Unauthorized if the current user is not a member of the group.
+        500: Internal server error if unable to fetch the room information.
+    """
     current_user_id = get_jwt_identity()
     
     # Sprawdź czy użytkownik należy do czatu
@@ -299,6 +422,23 @@ def get_room_info(room_id):
 @chat_bp.route('/rooms/<int:room_id>/save-changes', methods=['POST'])
 @jwt_required()
 def save_room_changes(room_id):
+    """
+    Endpoint do zapisywania zmian w nazwie i opisie czatu
+
+    Args:
+        room_id (int): ID pokoju
+
+    Returns:
+        json: {
+            status (str): "success" or "error"
+            message (str): Wiadomość o wyniku operacji
+        }
+
+    Error codes:
+        403: Unauthorized if the current user is not a member of the group.
+        400: Missing name or description in the request.
+        500: Internal server error if unable to save the changes.
+    """
     current_user_id = get_jwt_identity()
     data = request.get_json()
     

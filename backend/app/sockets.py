@@ -12,10 +12,15 @@ def register_socket_handlers(socketio):
     @jwt_required()
     def handle_connect():
         """
-        Handle the initial connection of the user to the SocketIO server.
+        Obsługuje zdarzenie 'connect' wysyłane przez klienta. Wymaga autoryzacji JWT.
 
-        Returns:
-            dict: A JSON-serializable dictionary with the user's ID and status.
+        Zwraca:
+            dict: JSON-serializowalny słownik z informacją o statusie połączenia.
+            Słownik zawiera klucz 'status', który może mieć jedną z poniższych wartości:
+            
+                * 'ok': Użytkownik został pomyślnie połączony.
+                * 'authorisation error': Wystąpił błąd autoryzacji JWT.
+                * 'server error': Wystąpił wewnętrzny błąd serwera podczas próby połączenia.
         """
 
         try:
@@ -37,24 +42,25 @@ def register_socket_handlers(socketio):
     @jwt_required()
     def handle_join_room(data):
         """
-        Handle the 'join_room' event sent by the client. This event should contain
-        an array of room IDs that the user wants to join.
+        Obsługuje zdarzenie 'join_room' wysyłane przez klienta. Wymaga autoryzacji JWT.
 
         Parameters:
-            data (dict): A JSON-serializable dictionary containing the room IDs to
-                join. The dictionary should have a single key called 'rooms' which
-                has an array of integers as its value.
+            data (dict): JSON-serializowalny słownik z informacją o pokojach do których
+                użytkownik chce dołączyć. Słownik powinien zawierać klucz 'rooms' o
+                wartości będącej listą identyfikatorów pokojów (int).
 
         Returns:
-            dict: A JSON-serializable dictionary with the status of the join
-                operation. The dictionary will have a 'status' key which can be one
-                of the following:
+            dict: JSON-serializowalny słownik z informacją o statusie operacji
+                dołączenia do pokojów. Słownik zawiera klucze 'status' i 'message'.
+                Wartość 'status' może być jedną z poniższych:
 
-                    * 'ok': The user was successfully joined to the room(s).
-                    * 'server error': An internal server error occurred while
-                        attempting to join the room(s).
-                    * 'authorisation error': The user is not authorized to join the
-                        room(s).
+                    * 'ok': Użytkownik został pomyślnie dołączony do pokojów.
+                    * 'authorisation error': Wystąpił błąd autoryzacji JWT.
+                    * 'server error': Wystąpił wewnętrzny błąd serwera podczas próby
+                        dołączenia do pokojów.
+
+                Wartość 'message' to wiadomość dla użytkownika z dodatkowymi
+                informacjami o błędzie.
         """
         print("\n=== SocketIO join_room called ===")
         user_id = get_jwt_identity()
@@ -95,6 +101,17 @@ def register_socket_handlers(socketio):
     @socketio.on('leave_room')
     @jwt_required()
     def handle_leave_room(data):
+        """
+        Obsługuje zdarzenie 'leave_room' wysyłane przez klienta. Wymaga autoryzacji JWT.
+
+        Parameters:
+            data (dict): JSON-serializowalny słownik z informacją o pokojach z
+                których użytkownik chce opuścić. Słownik powinien zawierać klucz
+                'room_id' o wartości będącej identyfikatorem pokoju (int).
+
+        Returns:
+            None
+        """
         user_id = get_jwt_identity()
         room_id = data['room_id']
         print(f"User {user_id} wants to leave room {room_id}")
@@ -103,33 +120,44 @@ def register_socket_handlers(socketio):
     @socketio.on('refresh')
     @jwt_required()
     def handle_refresh(data):
+        """
+        Obsługuje zdarzenie 'refresh' wysyłane przez klienta. Wymaga autoryzacji JWT.
+
+        Parameters:
+            data (dict): JSON-serializowalny słownik z informacją o odświeżeniu.
+                Słownik powinien zawierać klucz 'message' o wartości będącej
+                wiadomością do wyświetlenia w konsoli klienta.
+
+        Returns:
+            None
+        """
         socketio.emit('refresh', {'message': 'refresh'})
     
     @socketio.on('send_message')
     @jwt_required()
     def handle_send_message(data):
         """
-        Handle the 'send_message' event from the client.
+        Obsługuje zdarzenie 'send_message' wysyłane przez klienta. Wymaga autoryzacji JWT.
 
         Parameters:
-            data (dict): A JSON-serializable dictionary containing the message
-                data. The dictionary should have the following keys:
+            data (dict): JSON-serializowalny słownik zawierający informacje o wiadomości.
+                Słownik powinien zawierać następujące klucze:
+                    - 'room': identyfikator pokoju, do którego wiadomość ma zostać wysłana.
+                    - 'message': treść wiadomości.
+                    - 'message_type' (opcjonalnie): typ wiadomości, domyślnie MessageType.TEXT.
 
-                    * 'room': The ID of the room to which the message should be
-                        sent.
-                    * 'message': The content of the message.
+        Działanie:
+            1. Weryfikuje, czy użytkownik ma uprawnienia do wysyłania wiadomości do
+            wskazanego pokoju.
+            2. Zapisuje wiadomość w bazie danych przy użyciu modelu Messages.
+            3. Emituje zdarzenie 'new_message' z informacjami o wiadomości do
+            wszystkich użytkowników w pokoju.
 
-        Returns:
-            dict: A JSON-serializable dictionary with the status of the message
-                send operation. The dictionary will have a 'status' key which can
-                be one of the following:
-
-                    * 'ok': The message was successfully sent.
-                    * 'server error': An internal server error occurred while
-                        attempting to send the message.
-                    * 'authorisation error': The user is not authorized to send
-                        messages to the room.
+        Obsługa błędów:
+            - Emituje 'message_error' z odpowiednim komunikatem w przypadku braku
+            uprawnień lub błędów serwerowych podczas wysyłania wiadomości.
         """
+
         try:
             user_id = get_jwt_identity()
             room_id = data['room']  # Zmiana z 'room_id' na 'room'

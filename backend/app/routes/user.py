@@ -15,6 +15,22 @@ user_bp = Blueprint('user', __name__)
 @user_bp.route('/<int:user_id>', methods=['GET'])
 @jwt_required()
 def get_user_by_id(user_id):
+    """
+    Endpoint do pobierania informacji o uzytkowniku
+
+    Args:
+        user_id (int): ID uzytkownika
+
+    Returns:
+        json: {
+            status (str): "success" or "error"
+            user (dict): informacje o uzytkowniku
+        }
+
+    Error codes:
+        404: Not Found if the user does not exist.
+    """
+    
     print("tesfdsagfdgdfdgsfsdgfdgsf")
     user = Users.query.get(user_id)
     if not user:
@@ -62,6 +78,22 @@ def get_user_by_id(user_id):
 @user_bp.route('/<int:user_id>', methods=['POST'])
 @jwt_required()
 def update_user_by_id(user_id):
+    """
+    Endpoint do aktualizacji informacji o uzytkowniku
+
+    Args:
+        user_id (int): ID uzytkownika
+
+    Returns:
+        json: {
+            status (str): "success" or "error"
+        }
+
+    Error codes:
+        404: Not Found if the user does not exist.
+        400: Missing data in the request.
+        500: Internal server error if unable to update the user.
+    """
     user = Users.query.get(user_id)
     if not user:
         return jsonify({"status": "error"}), 404
@@ -90,6 +122,23 @@ def update_user_by_id(user_id):
 
 @user_bp.route('/search', methods=['GET'])
 def search_users():
+    """
+    Endpoint do wyszukiwania uzytkownikow
+
+    Args:
+        query (str): query to search for
+
+    Returns:
+        json: {
+            status (str): "success" or "error"
+            count (int): number of found users
+            users (list): list of found users, each containing id, name, and surname
+        }
+
+    Error codes:
+        400: Missing query parameter or query too short.
+        500: Internal server error if unable to search users.
+    """
     search_query = request.args.get('query', '').strip()
     
     if not search_query or len(search_query) < 2:
@@ -136,6 +185,23 @@ def search_users():
 @user_bp.route('/invite/<int:user_id>', methods=['POST'])
 @jwt_required()
 def inviteUser(user_id):
+    """
+    Endpoint do wysyłania zaproszeń do użytkowników
+
+    Args:
+        user_id (int): ID użytkownika, do którego wysyłane jest zaproszenie
+
+    Returns:
+        json: {
+            status (str): "success" or "error"
+            message (str): Wiadomość o wyniku operacji
+        }
+
+    Error codes:
+        400: Cannot invite yourself or invitation already exists.
+        500: Internal server error if unable to send the invitation.
+    """
+
     current_user_id = get_jwt_identity()
     if current_user_id == user_id:
         return jsonify({"status": "error", "message": "Cannot invite yourself"}), 400
@@ -161,6 +227,22 @@ def inviteUser(user_id):
 @user_bp.route('/invitation-accept/<int:user_id>', methods=['POST'])
 @jwt_required()
 def accept_invite(user_id):
+    """
+    Endpoint do akceptacji zaproszenia do znajomych obecnego uzytkownika i innego
+
+    Args:
+        user_id (int): Id uzytkownika, ktory otrzymal zaproszenie
+
+    Returns:
+        json: {
+            status (str): "success" or "error"
+            message (str): Wiadomość o wyniku operacji
+        }
+
+    Error codes:
+        400: No invitation found or internal server error if unable to accept the invitation.
+    """
+
     current_user_id = get_jwt_identity()
 
     # Sprawdź, czy zaproszenie istnieje
@@ -208,6 +290,21 @@ def accept_invite(user_id):
 @user_bp.route('/invitation-decline/<int:user_id>', methods=['POST'])
 @jwt_required()
 def decline_invite(user_id):
+    """
+    Endpoint do odrzucenia zaproszenia do znajomych obecnego uzytkownika i innego
+
+    Args:
+        user_id (int): Id uzytkownika, ktory otrzymal zaproszenie
+
+    Returns:
+        json: {
+            status (str): "success" or "error"
+            message (str): Wiadomość o wyniku operacji
+        }
+
+    Error codes:
+        400: No invitation found or internal server error if unable to accept the invitation.
+    """
     current_user_id = get_jwt_identity()
 
     # Sprawdź, czy zaproszenie istnieje
@@ -234,6 +331,15 @@ DEFAULT_PROFILE_PICTURE = 'default.jpg'
 # Utwórz folder jeśli nie istnieje
 os.makedirs(PROFILE_PICTURES_DIR, exist_ok=True)
 def allowed_file(filename):
+    """
+    Funkcja pomocnicza do sprawdzenia, czy plik ma prawidłowy format.
+
+    Args:
+        filename (str): Nazwa pliku.
+
+    Returns:
+        bool: True jeśli plik ma prawidłowy format, w przeciwnym przypadku False.
+    """
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -241,6 +347,22 @@ def allowed_file(filename):
 @jwt_required()
 def upload_profile_picture(user_id):
     # Weryfikacja użytkownika
+    """
+    Endpoint do uploadu zdjęcia profilowego
+
+    Args:
+        user_id (int): ID uzytkownika, ktoremu przypisujemy nowe zdjęcie
+
+    Returns:
+        json: {
+            status (str): "success" or "error"
+            message (str): Wiadomość o wyniku operacji
+        }
+
+    Error codes:
+        403: Unauthorized if the current user is not the same as the user_id.
+        400: No file part or invalid file type.
+    """
     current_user_id = get_jwt_identity()
     if current_user_id != user_id:
         return jsonify({"status": "error", "message": "Unauthorized"}), 403
@@ -271,6 +393,15 @@ def upload_profile_picture(user_id):
 @user_bp.route('/<int:user_id>/profile-picture', methods=['GET'])
 def get_profile_picture(user_id):
     # Sprawdzenie istniejącego pliki
+    """
+    Endpoint do pobierania zdjęcia profilowego użytkownika
+
+    Args:
+        user_id (int): ID użytkownika
+
+    Returns:
+        File: zdjęcie profilowe użytkownika lub domyślne zdjęcie
+    """
     for ext in ALLOWED_EXTENSIONS:
         filename = f"{user_id}.{ext}"
         if os.path.isfile(os.path.join(PROFILE_PICTURES_DIR, filename)):

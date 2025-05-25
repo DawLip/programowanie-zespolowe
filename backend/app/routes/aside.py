@@ -10,6 +10,25 @@ aside_bp = Blueprint('aside', __name__)
 @aside_bp.route('/aside', methods=['GET'])
 @jwt_required()
 def get_aside():
+    """
+    Endpoint zwraca informacje o znajomych i grupach, z ktorymi jest powiazany uzytkownik.
+    
+    Returns:
+        friends - lista znajomych, kazdy znajomy to:
+            id - id znajomego
+            roomId - id prywatnego pokoju, w ktorym uzytkownik rozmawia z znajomym
+            name - imie znajomego
+            surname - nazwisko znajomego
+            lastMessage - tresc ostatniej wiadomosci w prywatnym pokoju
+            lastMessageAuthor - autor ostatniej wiadomosci w prywatnym pokoju
+            isActive - czy znajomy jest aktywny
+        groups - lista grup, kazda grupa to:
+            roomId - id pokoju grupowego
+            name - nazwa pokoju
+            lastMessage - tresc ostatniej wiadomosci w pokoju
+            lastMessageAuthor - autor ostatniej wiadomosci w pokoju
+            isActive - czy grupa jest aktywna
+    """
     print("\n=== /aside called ===")
     user_id = get_jwt_identity()
     current_user = Users.query.get(user_id)
@@ -28,14 +47,6 @@ def get_aside():
         print(f"=== friend_id === {friend_id}")
         friend = Users.query.get(friend_id)
         
-        #Znajdź pokój czatu przez Room_Users
-        # room = Room.query.join(Room_Users, (Room.id == Room_Users.room_id))\
-        #     .filter(
-        #         Room_Users.user_id.in_([user_id, friend_id]),
-        #         Room.type == RoomType.PRIVATE
-        #     )\
-        #     .group_by(Room.id)\
-        #     .first()
         ru1 = aliased(Room_Users)
         ru2 = aliased(Room_Users)
         

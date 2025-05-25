@@ -6,7 +6,23 @@ auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/auth/register', methods=['POST'])
 def register():
-    # Pobieranie danych z formularza/JSON, choose one
+    """
+    Rejestracja nowego u ytkownika
+    Args:
+        {
+            "email": string,
+            "password": string,
+            "name": string,
+            "surname": string
+        }
+    Returns:
+        {
+            "status": "success" | "error",
+            "message": string,
+            "access_token": string,
+            "userId": int
+        }
+    """
     data = request.get_json()
     # data = request.form.get()
     email = data.get('email')
@@ -37,6 +53,21 @@ def register():
 
 @auth_bp.route('/auth/login', methods=['POST'])
 def login():
+    """
+    Logowanie uzytkownika
+    Args:
+        {
+            "email": string,
+            "password": string
+        }
+
+    Returns:
+        {
+            "status": "success" | "error",
+            "message": string,
+            "access_token": string
+        }
+    """
     data = request.get_json()
     if not data:
         return jsonify({"status": "error", "message": "No data provided"}), 400

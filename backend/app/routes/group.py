@@ -8,6 +8,28 @@ group_bp = Blueprint('group', __name__)
 @group_bp.route('/group/<int:group_id>', methods=['GET'])
 @jwt_required()
 def get_group(group_id):
+    """
+    Endpoint do pobierania informacji o grupie
+
+    Args:
+        group_id (int): ID grupy
+
+    Returns:
+        json: {
+            id (int): ID grupy
+            name (str): Nazwa grupy
+            type (str): Typ grupy (GROUP)
+            description (str): Opis grupy
+            members (list): Lista członków grupy, każdy członek to:
+                id (int): ID uzytkownika
+                name (str): Imie uzytkownika
+                surname (str): Nazwisko uzytkownika
+                role (str): Rola uzytkownika w grupie
+        }
+
+    Error codes:
+        403: Unauthorized if the current user is not a member of the group.
+    """
     user_id = get_jwt_identity()
     
     if not Room_Users.query.filter_by(user_id=user_id, room_id=group_id).first():
@@ -33,6 +55,23 @@ def get_group(group_id):
 @group_bp.route('/group/new', methods=['POST'])
 @jwt_required()
 def create_group():
+    """
+    Endpoint do tworzenia nowej grupy
+
+    Args:
+        name (str): Nazwa grupy
+        description (str): Opis grupy
+
+    Returns:
+        json: {
+            groupId (int): ID nowo utworzonej grupy
+            status (str): Status operacji ("ok" dla sukcesu, "error" dla bledu)
+        }
+
+    Error codes:
+        400: Missing required fields
+        500: Internal server error if unable to create the group
+    """
     data = request.get_json()
     #create group
     new_group = Room(
