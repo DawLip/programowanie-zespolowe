@@ -1,16 +1,8 @@
+**account_manager**
+
+***
+
 # ChatApp
-## Instalation and run
-### Frontend:
-Instalation:
-```
-cd website
-npm i
-```
-Run for development ```npm run dev```  
-### Backend:
-```
- TODO
-```# ChatApp
 ### Project: Web Application for User Communication 
 - The application allows user database management through a login system. Users can only edit or delete their own accounts. They can send private messages to each other and create group chats. The project emphasizes simplicity, security, and an intuitive interface.  
 ### Key Features:  
@@ -42,4 +34,3 @@ pip install -r requirements.txt
 ```bash
 flask run --port=5000 --debug
 ```
-
